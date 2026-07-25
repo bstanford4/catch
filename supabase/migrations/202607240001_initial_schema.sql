@@ -319,11 +319,80 @@ alter table public.reports enable row level security;
 alter table public.ratings enable row level security;
 alter table public.notification_preferences enable row level security;
 alter table public.device_push_tokens enable row level security;
+alter table public.activity_types enable row level security;
+alter table public.activity_subtypes enable row level security;
+alter table public.venues enable row level security;
+alter table public.venue_capabilities enable row level security;
+alter table public.venue_amenities enable row level security;
+
+create policy "activity catalog is readable"
+on public.activity_types for select to anon, authenticated
+using (active);
+
+create policy "activity subtypes are readable"
+on public.activity_subtypes for select to anon, authenticated
+using (active);
+
+create policy "public venues are readable"
+on public.venues for select to anon, authenticated
+using (is_public);
+
+create policy "public venue capabilities are readable"
+on public.venue_capabilities for select to anon, authenticated
+using (
+  exists (
+    select 1 from public.venues v
+    where v.id = venue_capabilities.venue_id
+      and v.is_public
+  )
+);
+
+create policy "public venue amenities are readable"
+on public.venue_amenities for select to anon, authenticated
+using (
+  exists (
+    select 1 from public.venues v
+    where v.id = venue_amenities.venue_id
+      and v.is_public
+  )
+);
 
 create policy "profiles own write"
 on public.profiles for all to authenticated
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
+
+create policy "activity preferences own rows"
+on public.user_activity_preferences for all to authenticated
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+create policy "availability own rows"
+on public.availability_windows for all to authenticated
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
+
+create policy "equipment own rows"
+on public.equipment_items for all to authenticated
+using (owner_id = auth.uid())
+with check (owner_id = auth.uid());
+
+create policy "equipment photos follow ownership"
+on public.equipment_photos for all to authenticated
+using (
+  exists (
+    select 1 from public.equipment_items equipment
+    where equipment.id = equipment_photos.equipment_item_id
+      and equipment.owner_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.equipment_items equipment
+    where equipment.id = equipment_photos.equipment_item_id
+      and equipment.owner_id = auth.uid()
+  )
+);
 
 create policy "blocks own rows"
 on public.blocks for all to authenticated
@@ -391,4 +460,42 @@ with check (
 
 comment on table public.private_location_secrets is
 'Opaque encrypted private-location material. Decrypt only in a trusted authorization-checked server function.';
+
+-- The project is intentionally created with "Automatically expose new tables"
+-- disabled. Grants are explicit so a table is reachable through the Data API
+-- only after its RLS posture has been reviewed.
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select on
+  public.activity_types,
+  public.activity_subtypes,
+  public.venues,
+  public.venue_capabilities,
+  public.venue_amenities
+to anon, authenticated;
+
+grant select, insert, update, delete on
+  public.profiles,
+  public.user_activity_preferences,
+  public.availability_windows,
+  public.equipment_items,
+  public.equipment_photos,
+  public.catches,
+  public.catch_participants,
+  public.join_requests,
+  public.open_to_catch_listings,
+  public.open_to_catch_activities,
+  public.catch_proposals,
+  public.proposal_revisions,
+  public.catch_messages,
+  public.catch_status_history,
+  public.blocks,
+  public.ratings,
+  public.notification_preferences,
+  public.device_push_tokens
+to authenticated;
+
+grant select, insert on public.reports to authenticated;
+grant all privileges on all tables in schema public to service_role;
+grant usage, select on all sequences in schema public to service_role;
 

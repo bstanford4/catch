@@ -3,10 +3,11 @@
 Catch is an activity-first mobile app for adults who want to find someone nearby
 for a casual, low-commitment recreational activity.
 
-The Phase 1 build is a polished, seeded Expo demo. It runs without external
-accounts and establishes the product shell, navigation, design system,
-authentication entry points, discovery feed, creation flow, messages, profile,
-empty/loading/error states, and backend boundaries needed for later phases.
+The app includes a polished seeded demo plus a live Supabase authentication
+connection. It runs without credentials in demo mode and establishes the product
+shell, navigation, design system, account creation and sign-in, discovery feed,
+creation flow, messages, profile, empty/loading/error states, and backend
+boundaries needed for later phases.
 
 ## Stack
 
@@ -67,8 +68,8 @@ secret.
 
 ## Current scope
 
-Phase 0 and Phase 1 are implemented. Supabase project provisioning, native push
-credentials, production maps, and app-store releases require external accounts
-and are intentionally deferred. See the roadmap for phase details and known
-limitations.
-
+Phase 0 and Phase 1 are implemented. Phase 2 authentication is connected:
+account creation, email confirmation, sign-in, persisted sessions, and sign-out
+use Supabase when credentials are present. Apply the database migration before
+building persisted profiles. Native push credentials, production maps, and
+app-store releases are intentionally deferred. See the roadmap for details.

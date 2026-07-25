@@ -19,12 +19,14 @@
 - Empty, loading, and error-state components.
 - Responsive, accessible phone layouts.
 
-## Next phases
+## In progress
 
 ### Phase 2 — profiles and onboarding
 
-Connect Supabase Auth, persisted onboarding, image upload, activity preferences,
-availability, equipment, privacy, account deletion, and contextual permissions.
+Supabase account creation, email login, session persistence, and logout are
+connected. Remaining work is persisted onboarding, image upload, activity
+preferences, availability, equipment, privacy, account deletion, and contextual
+permissions.
 
 ### Phase 3 — venues and location
 
@@ -90,8 +92,9 @@ justify one.
 ## Known limitations
 
 - Phase 1 data is local and fictional.
-- Authentication UI is not connected until a Supabase project is configured.
+- Authentication is connected when Supabase credentials are configured, but
+  profile onboarding remains seeded until the migration is applied and the
+  Phase 2 profile forms are implemented.
 - Map, push, realtime, moderation operations, and uploads are interfaces or schema
   foundations, not production integrations.
 - Native device and app-store validation require external accounts and hardware.
-

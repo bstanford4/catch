@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@/components/ui/avatar';
 import { Screen } from '@/components/ui/screen';
 import { colors, radius, spacing } from '@/constants/theme';
+import { useAuth } from '@/providers/auth-provider';
 
 const settings: {
   icon: ComponentProps<typeof Ionicons>['name'];
@@ -22,6 +23,15 @@ const settings: {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { session, signOut } = useAuth();
+
+  async function leaveAccount() {
+    if (session) {
+      const result = await signOut();
+      if (result.error) return;
+    }
+    router.replace('/welcome');
+  }
 
   return (
     <Screen>
@@ -99,11 +109,15 @@ export default function ProfileScreen() {
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push('/welcome')}
+        onPress={leaveAccount}
         style={styles.demoButton}>
-        <Text style={styles.demoButtonText}>Preview welcome & sign-in</Text>
+        <Text style={styles.demoButtonText}>
+          {session ? 'Sign out' : 'Preview welcome & sign-in'}
+        </Text>
       </Pressable>
-      <Text style={styles.demoLabel}>Seeded demo mode · no precise location stored</Text>
+      <Text style={styles.demoLabel}>
+        {session?.user.email ?? 'Seeded demo mode · no precise location stored'}
+      </Text>
     </Screen>
   );
 }
@@ -297,4 +311,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
