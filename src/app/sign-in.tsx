@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
@@ -20,6 +20,7 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const isCreateMode = mode === 'create';
   const isValid =
@@ -31,12 +32,14 @@ export default function SignInScreen() {
   function selectMode(nextMode: AuthMode) {
     setMode(nextMode);
     setError('');
+    setNotice('');
   }
 
   async function submit() {
     if (!isValid) return;
     setIsSubmitting(true);
     setError('');
+    setNotice('');
 
     const normalizedEmail = email.trim().toLowerCase();
     const result = isCreateMode
@@ -51,11 +54,9 @@ export default function SignInScreen() {
     }
 
     if (result.needsEmailConfirmation) {
-      Alert.alert(
-        'Check your email',
-        'Supabase sent a confirmation link. Open it, then return here and sign in.',
-        [{ text: 'Got it', onPress: () => selectMode('sign-in') }],
-      );
+      setMode('sign-in');
+      setPassword('');
+      setNotice('Account created. Check your email for a confirmation link, then sign in here.');
       return;
     }
 
@@ -150,6 +151,16 @@ export default function SignInScreen() {
         <View accessibilityLiveRegion="polite" style={styles.error}>
           <Ionicons color={colors.error} name="alert-circle" size={18} />
           <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      {notice ? (
+        <View accessibilityLiveRegion="polite" style={styles.notice}>
+          <Ionicons color={colors.forest} name="checkmark-circle" size={20} />
+          <View style={styles.noticeCopy}>
+            <Text style={styles.noticeTitle}>Check your email</Text>
+            <Text style={styles.noticeText}>{notice}</Text>
+          </View>
         </View>
       ) : null}
 
@@ -291,6 +302,29 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '700',
   },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.paleGreen,
+    padding: 13,
+  },
+  noticeCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  noticeTitle: {
+    color: colors.forest,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  noticeText: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   button: {
     marginTop: spacing.xl,
   },
@@ -306,4 +340,3 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
 });
-
