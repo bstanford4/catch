@@ -13,12 +13,19 @@ import { colors, radius, spacing } from '@/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const todayLabel = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+    .format(new Date())
+    .toUpperCase();
 
   return (
     <Screen>
       <View style={styles.header}>
         <View>
-          <Text style={styles.eyebrow}>FRIDAY, JULY 24</Text>
+          <Text style={styles.eyebrow}>{todayLabel}</Text>
           <Text style={styles.greeting}>Hey, Blake.</Text>
         </View>
         <Pressable accessibilityLabel="Open profile" onPress={() => router.push('/(tabs)/profile')}>
@@ -244,4 +251,3 @@ const styles = StyleSheet.create({
     gap: 13,
   },
 });
-

@@ -24,6 +24,7 @@ export default function TabLayout() {
           fontWeight: '700',
           marginTop: 2,
         },
+        tabBarLabelPosition: 'below-icon',
         tabBarStyle: styles.tabBar,
         tabBarIcon: ({ color, focused, size }) => {
           const names = iconForRoute[route.name as keyof typeof iconForRoute];
@@ -74,4 +75,3 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
-
