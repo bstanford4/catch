@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar } from '@/components/ui/avatar';
 import { Screen } from '@/components/ui/screen';
 import { colors, radius, spacing } from '@/constants/theme';
+import { activities } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
 
 const settings: {
@@ -23,7 +24,25 @@ const settings: {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { session, signOut } = useAuth();
+  const { profile, session, signOut } = useAuth();
+  const displayName = profile?.firstName ?? 'Blake';
+  const initials =
+    displayName
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'C';
+  const selectedActivities = profile
+    ? activities.filter((activity) => profile.activitySlugs.includes(activity.id)).slice(0, 3)
+    : activities.filter((activity) => ['baseball', 'football', 'frisbee'].includes(activity.id));
+  const visibleSettings = session
+    ? settings.map((setting) => {
+        if (setting.label === 'Equipment') return { ...setting, detail: 'Nothing added yet' };
+        if (setting.label === 'Availability') return { ...setting, detail: 'Not set yet' };
+        return setting;
+      })
+    : settings;
 
   async function leaveAccount() {
     if (session) {
@@ -43,19 +62,22 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.profileHeader}>
-        <Avatar initials="BL" size={82} tone="orange" />
+        <Avatar initials={initials} size={82} tone="orange" />
         <View style={styles.profileText}>
           <View style={styles.nameRow}>
-            <Text style={styles.name}>Blake</Text>
+            <Text style={styles.name}>{displayName}</Text>
             <Ionicons color={colors.grass} name="checkmark-circle" size={19} />
           </View>
-          <Text style={styles.area}>North Stafford, VA</Text>
+          <Text style={styles.area}>{profile?.areaLabel ?? 'North Stafford, VA'}</Text>
           <View style={styles.activityLine}>
-            <Text style={styles.activityText}>⚾ Baseball</Text>
-            <Text style={styles.dot}>·</Text>
-            <Text style={styles.activityText}>🏈 Football</Text>
-            <Text style={styles.dot}>·</Text>
-            <Text style={styles.activityText}>🥏 Frisbee</Text>
+            {selectedActivities.map((activity, index) => (
+              <View key={activity.id} style={styles.activityItem}>
+                {index > 0 ? <Text style={styles.dot}>·</Text> : null}
+                <Text style={styles.activityText}>
+                  {activity.emoji} {activity.name}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
       </View>
@@ -64,33 +86,37 @@ export default function ProfileScreen() {
         <View style={styles.cardHeading}>
           <View>
             <Text style={styles.cardEyebrow}>CATCH CARD</Text>
-            <Text style={styles.cardName}>Blake’s scouting report</Text>
+            <Text style={styles.cardName}>{displayName}’s scouting report</Text>
           </View>
           <Text style={styles.cardMark}>C</Text>
         </View>
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statValue}>{session ? '0' : '12'}</Text>
             <Text style={styles.statLabel}>CATCHES</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>98%</Text>
+            <Text style={styles.statValue}>{session ? 'NEW' : '98%'}</Text>
             <Text style={styles.statLabel}>RELIABLE</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>100%</Text>
+            <Text style={styles.statValue}>{session ? '—' : '100%'}</Text>
             <Text style={styles.statLabel}>AGAIN</Text>
           </View>
         </View>
         <View style={styles.scouting}>
-          <Text style={styles.scoutingText}>“Brings an extra glove. Doesn’t leave mates hanging.”</Text>
+          <Text style={styles.scoutingText}>
+            {session
+              ? '“Fresh arm. First scouting report coming after a completed catch.”'
+              : '“Brings an extra glove. Doesn’t leave mates hanging.”'}
+          </Text>
         </View>
       </LinearGradient>
 
       <View style={styles.settingsList}>
-        {settings.map((item) => (
+        {visibleSettings.map((item) => (
           <Pressable
             accessibilityLabel={`${item.label}. ${item.detail}`}
             key={item.label}
@@ -180,6 +206,10 @@ const styles = StyleSheet.create({
     color: colors.forest,
     fontSize: 11,
     fontWeight: '700',
+  },
+  activityItem: {
+    flexDirection: 'row',
+    gap: 4,
   },
   dot: {
     color: colors.muted,

@@ -23,6 +23,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="welcome" options={{ headerShown: false }} />
           <Stack.Screen name="sign-in" options={{ title: 'Welcome to Catch' }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="create/[mode]" options={{ title: 'Create a Catch' }} />
           <Stack.Screen name="catch/[id]" options={{ title: 'Catch details' }} />
         </Stack>

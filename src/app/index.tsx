@@ -5,9 +5,9 @@ import { colors } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 
 export default function Index() {
-  const { isLoading, session } = useAuth();
+  const { isLoading, isProfileLoading, profile, session } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || isProfileLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={colors.orange} size="large" />
@@ -15,7 +15,8 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={session ? '/(tabs)' : '/welcome'} />;
+  if (!session) return <Redirect href="/welcome" />;
+  return <Redirect href={profile ? '/(tabs)' : '/onboarding'} />;
 }
 
 const styles = StyleSheet.create({

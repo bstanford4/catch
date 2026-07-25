@@ -60,7 +60,7 @@ export default function SignInScreen() {
       return;
     }
 
-    router.replace('/(tabs)');
+    router.replace('/');
   }
 
   return (

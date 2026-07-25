@@ -68,8 +68,9 @@ secret.
 
 ## Current scope
 
-Phase 0 and Phase 1 are implemented. Phase 2 authentication is connected:
-account creation, email confirmation, sign-in, persisted sessions, and sign-out
-use Supabase when credentials are present. Apply the database migration before
-building persisted profiles. Native push credentials, production maps, and
-app-store releases are intentionally deferred. See the roadmap for details.
+Phase 0 and Phase 1 are implemented. Phase 2 authentication and initial profile
+onboarding are connected: account creation, email confirmation, sign-in,
+persisted sessions, sign-out, first name, broad area, activity preferences,
+discovery radius, and 21+ affirmation use Supabase when credentials are present.
+Native push credentials, production maps, and app-store releases are
+intentionally deferred. See the roadmap for details.

@@ -10,9 +10,21 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { Screen } from '@/components/ui/screen';
 import { activities, catches, catchMates } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { profile } = useAuth();
+  const firstName = profile?.firstName ?? 'Blake';
+  const initials =
+    firstName
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'C';
+  const areaLabel = profile?.areaLabel ?? 'North Stafford';
+  const radiusMiles = profile?.preferredRadiusMiles ?? 10;
   const todayLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     month: 'long',
@@ -26,16 +38,18 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.eyebrow}>{todayLabel}</Text>
-          <Text style={styles.greeting}>Hey, Blake.</Text>
+          <Text style={styles.greeting}>Hey, {firstName}.</Text>
         </View>
         <Pressable accessibilityLabel="Open profile" onPress={() => router.push('/(tabs)/profile')}>
-          <Avatar initials="BL" size={45} tone="orange" />
+          <Avatar initials={initials} size={45} tone="orange" />
         </Pressable>
       </View>
 
       <Pressable accessibilityRole="button" style={styles.location}>
         <Ionicons color={colors.forest} name="location" size={16} />
-        <Text style={styles.locationText}>North Stafford · 10 mi</Text>
+        <Text style={styles.locationText}>
+          {areaLabel} · {radiusMiles} mi
+        </Text>
         <Ionicons color={colors.forest} name="chevron-down" size={15} />
       </Pressable>
 

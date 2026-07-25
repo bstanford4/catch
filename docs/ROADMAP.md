@@ -23,10 +23,11 @@
 
 ### Phase 2 — profiles and onboarding
 
-Supabase account creation, email login, session persistence, and logout are
-connected. Remaining work is persisted onboarding, image upload, activity
-preferences, availability, equipment, privacy, account deletion, and contextual
-permissions.
+Supabase account creation, email login, session persistence, logout, and initial
+profile onboarding are connected. First name, broad area, favorite activities,
+discovery radius, and optional 21+ affirmation persist to Supabase. Remaining
+work is image upload, availability, equipment, expanded privacy settings,
+account deletion, and contextual permissions.
 
 ### Phase 3 — venues and location
 
@@ -92,9 +93,9 @@ justify one.
 ## Known limitations
 
 - Phase 1 data is local and fictional.
-- Authentication is connected when Supabase credentials are configured, but
-  profile onboarding remains seeded until the migration is applied and the
-  Phase 2 profile forms are implemented.
+- Authentication and initial profile onboarding are connected when Supabase
+  credentials and migrations are configured. Availability, equipment, profile
+  photos, and account deletion remain deferred.
 - Map, push, realtime, moderation operations, and uploads are interfaces or schema
   foundations, not production integrations.
 - Native device and app-store validation require external accounts and hardware.

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Redirect, Tabs } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { colors } from '@/constants/theme';
+import { useAuth } from '@/providers/auth-provider';
 
 const iconForRoute = {
   index: ['home-outline', 'home'],
@@ -13,6 +14,18 @@ const iconForRoute = {
 } as const;
 
 export default function TabLayout() {
+  const { isProfileLoading, profile, session } = useAuth();
+
+  if (session && isProfileLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={colors.orange} size="large" />
+      </View>
+    );
+  }
+
+  if (session && !profile) return <Redirect href="/onboarding" />;
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -49,6 +62,12 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cream,
+  },
   tabBar: {
     position: 'absolute',
     height: 82,
