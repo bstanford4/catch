@@ -4,11 +4,11 @@ Catch is an activity-first mobile app for adults who want to find someone nearby
 for a casual, low-commitment recreational activity.
 
 The app includes a polished seeded demo plus live Supabase-backed authentication,
-profile onboarding, broad availability, and equipment management. It runs
-without credentials in demo mode and establishes the product shell, navigation,
-design system, account creation and sign-in, discovery feed, creation flow,
-messages, profile, empty/loading/error states, and backend boundaries needed for
-later phases.
+profile onboarding, broad availability, equipment management, Catch Now and
+scheduled Catch creation, and host management. It runs without credentials in
+demo mode and establishes the product shell, navigation, design system, account
+creation and sign-in, discovery feed, creation flow, messages, profile,
+empty/loading/error states, and backend boundaries needed for later phases.
 
 ## Stack
 
@@ -74,6 +74,8 @@ onboarding, broad availability, and equipment are connected: account creation,
 email confirmation, sign-in, persisted sessions, sign-out, first name, broad
 area, activity preferences, discovery radius, 21+ affirmation, expiring
 availability windows, equipment records, and private compressed equipment photos
-use Supabase when credentials are present. Native push credentials, production
-maps, and app-store releases are intentionally deferred. See the roadmap for
-details.
+use Supabase when credentials are present. Hosts can also create, edit, review,
+and cancel persisted Catch Now and scheduled Catch plans at public seeded
+venues. Open to Catch publishing, real discovery/joining, native push
+credentials, production maps, and app-store releases are intentionally deferred.
+See the roadmap for details.

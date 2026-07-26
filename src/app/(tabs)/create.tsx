@@ -48,7 +48,16 @@ export default function CreateScreen() {
 
   return (
     <Screen>
-      <Text style={styles.eyebrow}>MAKE A PLAN</Text>
+      <View style={styles.headingRow}>
+        <Text style={styles.eyebrow}>MAKE A PLAN</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/my-catches')}
+          style={({ pressed }) => [styles.myCatches, pressed && styles.pressed]}>
+          <Ionicons color={colors.forest} name="clipboard-outline" size={16} />
+          <Text style={styles.myCatchesText}>My Catches</Text>
+        </Pressable>
+      </View>
       <Text style={styles.title}>What sounds good?</Text>
       <Text style={styles.subtitle}>A few taps between you and a much better afternoon.</Text>
 
@@ -110,13 +119,30 @@ export default function CreateScreen() {
 }
 
 const styles = StyleSheet.create({
-  eyebrow: {
+  headingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: spacing.sm,
+  },
+  eyebrow: {
     color: colors.orangeDark,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.2,
   },
+  myCatches: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
+  myCatchesText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
   title: {
     color: colors.ink,
     fontSize: 34,
@@ -235,4 +261,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-

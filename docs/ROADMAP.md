@@ -38,8 +38,11 @@ controls, map adapter, and private-location access tests.
 
 ### Phase 4 — creation
 
-Persist Catch Now, scheduled Catch, and Open to Catch multi-step forms with
-activity-specific metadata, capacity, visibility, and 21+ gates.
+Catch Now and scheduled Catch forms now persist activity, start time, duration,
+public venue, capacity, approval preference, intensity, age gate, and
+description. Hosts can review, edit, and cancel their plans from My Catches.
+Remaining work is Open to Catch publishing, activity-specific metadata, richer
+venue creation, and cancellation audit events.
 
 ### Phase 5 — discovery and proposals
 
@@ -97,8 +100,9 @@ justify one.
 - Phase 1 data is local and fictional.
 - Authentication, initial profile onboarding, availability, equipment, and
   private equipment-photo uploads are connected when Supabase credentials and
-  migrations are configured. Profile photos and account deletion remain
-  deferred.
+  migrations are configured. Catch Now and scheduled Catch creation and host
+  management are also connected. Profile photos, account deletion, and Open to
+  Catch publishing remain deferred.
 - Map, push, realtime, and moderation operations are interfaces or schema
   foundations, not production integrations.
 - Native device and app-store validation require external accounts and hardware.

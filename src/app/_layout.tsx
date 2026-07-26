@@ -26,6 +26,7 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="equipment" options={{ title: 'Equipment' }} />
           <Stack.Screen name="availability" options={{ title: 'Availability' }} />
+          <Stack.Screen name="my-catches" options={{ title: 'My Catches' }} />
           <Stack.Screen name="create/[mode]" options={{ title: 'Create a Catch' }} />
           <Stack.Screen name="catch/[id]" options={{ title: 'Catch details' }} />
         </Stack>

@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
+import { activityEmojiBySlug } from '@/constants/activity-catalog';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 import { activities } from '@/data/demo';
 import { supabase } from '@/lib/supabase';
@@ -26,20 +27,6 @@ type ActivityOption = {
 };
 
 const conditions = ['Excellent', 'Good', 'Well-loved'];
-const activityEmojiBySlug: Record<string, string> = {
-  baseball: '⚾',
-  softball: '🥎',
-  football: '🏈',
-  frisbee: '🥏',
-  lacrosse: '🥍',
-  soccer: '⚽',
-  basketball: '🏀',
-  tennis: '🎾',
-  pickleball: '🏓',
-  pong: '🏓',
-  die: '🎲',
-  other: '✨',
-};
 
 export default function EquipmentScreen() {
   const { profile, session } = useAuth();

@@ -45,13 +45,22 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      <Pressable accessibilityRole="button" style={styles.location}>
-        <Ionicons color={colors.forest} name="location" size={16} />
-        <Text style={styles.locationText}>
-          {areaLabel} · {radiusMiles} mi
-        </Text>
-        <Ionicons color={colors.forest} name="chevron-down" size={15} />
-      </Pressable>
+      <View style={styles.quickNav}>
+        <Pressable accessibilityRole="button" style={styles.location}>
+          <Ionicons color={colors.forest} name="location" size={16} />
+          <Text numberOfLines={1} style={styles.locationText}>
+            {areaLabel} · {radiusMiles} mi
+          </Text>
+          <Ionicons color={colors.forest} name="chevron-down" size={15} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/my-catches')}
+          style={({ pressed }) => [styles.myCatches, pressed && styles.pressed]}>
+          <Ionicons color={colors.forest} name="clipboard-outline" size={16} />
+          <Text style={styles.myCatchesText}>My Catches</Text>
+        </Pressable>
+      </View>
 
       <LinearGradient
         colors={[colors.forest, '#285E43']}
@@ -141,13 +150,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: -1,
   },
+  quickNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
   location: {
-    alignSelf: 'flex-start',
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginTop: spacing.md,
-    marginBottom: spacing.md,
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: radius.pill,
@@ -156,10 +171,23 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   locationText: {
+    flexShrink: 1,
     color: colors.forest,
     fontSize: 13,
     fontWeight: '700',
   },
+  myCatches: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.pill,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
+  myCatchesText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
   hero: {
     minHeight: 254,
     overflow: 'hidden',
