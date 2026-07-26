@@ -41,8 +41,10 @@ controls, map adapter, and private-location access tests.
 Catch Now and scheduled Catch forms now persist activity, start time, duration,
 public venue, capacity, approval preference, intensity, age gate, and
 description. Hosts can review, edit, and cancel their plans from My Catches.
-Remaining work is Open to Catch publishing, activity-specific metadata, richer
-venue creation, and cancellation audit events.
+Hosts can also enter a custom activity, exact date/time, duration, or unlisted
+public place/general area. Remaining work is Open to Catch publishing,
+activity-specific metadata beyond the custom label, shared venue submission and
+geocoding, and cancellation audit events.
 
 ### Phase 5 — discovery and proposals
 

@@ -79,3 +79,8 @@ and cancel persisted Catch Now and scheduled Catch plans at public seeded
 venues. Open to Catch publishing, real discovery/joining, native push
 credentials, production maps, and app-store releases are intentionally deferred.
 See the roadmap for details.
+
+Catch creation includes flexible “Other” options for a custom activity,
+date/time, duration, and public-place name/general area. Custom places are stored
+on that Catch rather than silently added to the shared venue catalog, and the UI
+warns hosts not to enter private home addresses.

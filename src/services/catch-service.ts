@@ -30,6 +30,9 @@ export type HostedCatch = {
   activity: CatchCatalogActivity;
   approvalRequired: boolean;
   capacity: number;
+  customActivityName: string | null;
+  customVenueArea: string | null;
+  customVenueName: string | null;
   description: string;
   durationMinutes: number;
   id: string;
@@ -46,6 +49,9 @@ export type CatchInput = {
   activityTypeId: string;
   approvalRequired: boolean;
   capacity: number;
+  customActivityName: string;
+  customVenueArea: string;
+  customVenueName: string;
   description: string;
   durationMinutes: number;
   hostId: string;
@@ -54,7 +60,7 @@ export type CatchInput = {
   minimumAge: 18 | 21;
   startsAt: string;
   title: string;
-  venue: CatchVenue;
+  venue: CatchVenue | null;
 };
 
 type ActivityRow = {
@@ -80,12 +86,19 @@ type HostedCatchRow = {
   id: string;
   intensity: string | null;
   kind: 'now' | 'scheduled';
+  metadata: Record<string, unknown> | null;
   minimum_age: 18 | 21;
   starts_at: string;
   status: CatchStatus;
   title: string;
+  area_label: string;
   venues: VenueRow | VenueRow[] | null;
 };
+
+function metadataText(metadata: Record<string, unknown> | null, key: string) {
+  const value = metadata?.[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
 
 function firstRelation<T>(value: T | T[] | null) {
   return Array.isArray(value) ? value[0] ?? null : value;
@@ -118,6 +131,9 @@ function mapHostedCatch(row: HostedCatchRow): HostedCatch | null {
     activity: mapActivity(activity),
     approvalRequired: row.approval_required,
     capacity: row.capacity,
+    customActivityName: metadataText(row.metadata, 'custom_activity_name'),
+    customVenueArea: metadataText(row.metadata, 'custom_venue_area') ?? row.area_label,
+    customVenueName: metadataText(row.metadata, 'custom_venue_name'),
     description: row.description ?? '',
     durationMinutes: row.duration_minutes,
     id: row.id,
@@ -143,6 +159,8 @@ const hostedCatchSelect = `
   intensity,
   minimum_age,
   status,
+  metadata,
+  area_label,
   activity_types(id, slug, name, emoji),
   venues(id, name, area_label, address_display)
 `;
@@ -225,7 +243,7 @@ function catchRow(input: CatchInput) {
   return {
     activity_type_id: input.activityTypeId,
     approval_required: input.approvalRequired,
-    area_label: input.venue.areaLabel,
+    area_label: input.venue?.areaLabel ?? input.customVenueArea.trim(),
     capacity: input.capacity,
     description: input.description.trim() || null,
     duration_minutes: input.durationMinutes,
@@ -234,11 +252,21 @@ function catchRow(input: CatchInput) {
     intensity: input.intensity,
     kind: input.kind,
     minimum_age: input.minimumAge,
+    metadata: {
+      ...(input.customActivityName.trim()
+        ? { custom_activity_name: input.customActivityName.trim() }
+        : {}),
+      ...(input.customVenueName.trim()
+        ? {
+            custom_venue_area: input.customVenueArea.trim(),
+            custom_venue_name: input.customVenueName.trim(),
+          }
+        : {}),
+    },
     starts_at: input.startsAt,
-    status: 'open',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     title: input.title.trim(),
-    venue_id: input.venue.id,
+    venue_id: input.venue?.id ?? null,
     visibility: 'public',
   };
 }
@@ -247,7 +275,7 @@ export async function createCatch(input: CatchInput) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
   const { data, error } = await supabase
     .from('catches')
-    .insert(catchRow(input))
+    .insert({ ...catchRow(input), status: 'open' })
     .select('id')
     .single();
   return { data: data?.id ?? null, error: error?.message };

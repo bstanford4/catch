@@ -186,13 +186,18 @@ function HostedCatchCard({
         </View>
         <Text style={styles.cardTitle}>{item.title}</Text>
         <View style={styles.metaRow}>
+          <Ionicons color={colors.forestSoft} name="sparkles-outline" size={15} />
+          <Text style={styles.meta}>{item.customActivityName ?? item.activity.name}</Text>
+        </View>
+        <View style={styles.metaRow}>
           <Ionicons color={colors.forestSoft} name="time-outline" size={15} />
           <Text style={styles.meta}>{startLabel} · {item.durationMinutes} min</Text>
         </View>
         <View style={styles.metaRow}>
           <Ionicons color={colors.forestSoft} name="location-outline" size={15} />
           <Text numberOfLines={1} style={styles.meta}>
-            {item.venue?.name ?? 'Venue unavailable'} · {item.capacity} people
+            {item.customVenueName ?? item.venue?.name ?? item.customVenueArea ?? 'Venue unavailable'}{' '}
+            · {item.capacity} people
           </Text>
         </View>
         {active && onEdit && onCancel ? (

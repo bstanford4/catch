@@ -45,14 +45,24 @@ const scheduledHours = [
   { hour: 20, label: '8 PM' },
 ];
 const vibes = ['Easygoing', 'Beginner-friendly', 'Bring the heat'];
+const otherActivity: CatchCatalogActivity = {
+  color: '#F6EADF',
+  emoji: '✨',
+  id: 'other',
+  name: 'Other',
+  slug: 'other',
+};
 
-const demoCatalog: CatchCatalogActivity[] = demoActivities.map((activity) => ({
-  color: activity.color,
-  emoji: activity.emoji,
-  id: activity.id,
-  name: activity.name,
-  slug: activity.id,
-}));
+const demoCatalog: CatchCatalogActivity[] = [
+  ...demoActivities.map((activity) => ({
+    color: activity.color,
+    emoji: activity.emoji,
+    id: activity.id,
+    name: activity.name,
+    slug: activity.id,
+  })),
+  otherActivity,
+];
 const demoVenues: CatchVenue[] = [
   {
     addressDisplay: 'North Stafford public park',
@@ -78,6 +88,38 @@ function dateKey(date: Date) {
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
 
+function dateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function timeInputValue(date: Date) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function parseLocalDateTime(dateValue: string, timeValue: string) {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue.trim());
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(timeValue.trim());
+  if (!dateMatch || !timeMatch) return null;
+  const year = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const day = Number(dateMatch[3]);
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (hour > 23 || minute > 59) return null;
+  const parsed = new Date(year, month - 1, day, hour, minute, 0, 0);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+  return parsed;
+}
+
 export default function CreateModeScreen() {
   const params = useLocalSearchParams<{ activity?: string; catchId?: string; mode?: string }>();
   const router = useRouter();
@@ -89,18 +131,27 @@ export default function CreateModeScreen() {
   const [catalog, setCatalog] = useState<CatchCatalogActivity[]>(demoCatalog);
   const [venues, setVenues] = useState<CatchVenue[]>(demoVenues);
   const [activitySlug, setActivitySlug] = useState(initialActivity.id);
+  const [customActivityName, setCustomActivityName] = useState('');
   const [venueId, setVenueId] = useState(demoVenues[0].id);
+  const [customVenueName, setCustomVenueName] = useState('');
+  const [customVenueArea, setCustomVenueArea] = useState(profile?.areaLabel ?? '');
   const [title, setTitle] = useState(`${initialActivity.name} catch`);
   const [durationMinutes, setDurationMinutes] = useState(45);
+  const [customDuration, setCustomDuration] = useState(false);
+  const [customDurationText, setCustomDurationText] = useState('75');
   const [nowOffsetMinutes, setNowOffsetMinutes] = useState(60);
   const [scheduledDay, setScheduledDay] = useState(1);
   const [scheduledHour, setScheduledHour] = useState(18);
+  const [customWhen, setCustomWhen] = useState(false);
+  const [baseNow] = useState(() => new Date());
+  const initialCustomStart = new Date(baseNow.getTime() + 60 * 60_000);
+  const [customDate, setCustomDate] = useState(dateInputValue(initialCustomStart));
+  const [customTime, setCustomTime] = useState(timeInputValue(initialCustomStart));
   const [capacity, setCapacity] = useState(4);
   const [intensity, setIntensity] = useState('Easygoing');
   const [approvalRequired, setApprovalRequired] = useState(true);
   const [minimumAge, setMinimumAge] = useState<18 | 21>(18);
   const [note, setNote] = useState('');
-  const [baseNow] = useState(() => new Date());
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -140,7 +191,12 @@ export default function CreateModeScreen() {
         setError(catalogResult.error);
       } else {
         const preferredSlugs = profile?.activitySlugs ?? [];
-        const sorted = [...catalogResult.activities].sort((a, b) => {
+        const loadedActivities = catalogResult.activities.some(
+          (activity) => activity.slug === 'other',
+        )
+          ? catalogResult.activities
+          : [...catalogResult.activities, otherActivity];
+        const sorted = [...loadedActivities].sort((a, b) => {
           const aPreferred = preferredSlugs.includes(a.slug) ? 0 : 1;
           const bPreferred = preferredSlugs.includes(b.slug) ? 0 : 1;
           return aPreferred - bPreferred;
@@ -163,32 +219,36 @@ export default function CreateModeScreen() {
       } else if (catchResult.data) {
         const item = catchResult.data;
         setActivitySlug(item.activity.slug);
-        setVenueId(item.venue?.id ?? '');
+        setCustomActivityName(item.customActivityName ?? '');
+        setVenueId(item.venue?.id ?? 'other');
+        setCustomVenueName(item.customVenueName ?? '');
+        setCustomVenueArea(item.customVenueArea ?? profile?.areaLabel ?? '');
         setTitle(item.title);
         setDurationMinutes(item.durationMinutes);
+        setCustomDuration(!durations.includes(item.durationMinutes));
+        setCustomDurationText(String(item.durationMinutes));
         setCapacity(item.capacity);
         setIntensity(item.intensity);
         setApprovalRequired(item.approvalRequired);
         setMinimumAge(item.minimumAge);
         setNote(item.description);
         const start = new Date(item.startsAt);
+        setCustomDate(dateInputValue(start));
+        setCustomTime(timeInputValue(start));
         if (item.kind === 'now') {
-          const minutes = Math.max(30, Math.round((start.getTime() - Date.now()) / 60_000));
-          setNowOffsetMinutes(
-            nowOffsets.reduce((closest, option) =>
-              Math.abs(option - minutes) < Math.abs(closest - minutes) ? option : closest,
-            ),
-          );
+          setCustomWhen(true);
         } else {
           const day = dayOptions.find((option) => dateKey(option.date) === dateKey(start));
-          setScheduledDay(day?.offset ?? 1);
-          const hour = scheduledHours.reduce((closest, option) =>
-            Math.abs(option.hour - start.getHours()) <
-            Math.abs(closest.hour - start.getHours())
-              ? option
-              : closest,
+          const exactHour = scheduledHours.find(
+            (option) => option.hour === start.getHours() && start.getMinutes() === 0,
           );
-          setScheduledHour(hour.hour);
+          if (day && exactHour) {
+            setCustomWhen(false);
+            setScheduledDay(day.offset);
+            setScheduledHour(exactHour.hour);
+          } else {
+            setCustomWhen(true);
+          }
         }
       }
       setIsLoading(false);
@@ -197,12 +257,27 @@ export default function CreateModeScreen() {
     return () => {
       active = false;
     };
-  }, [dayOptions, editingId, params.activity, profile?.activitySlugs, session]);
+  }, [
+    dayOptions,
+    editingId,
+    params.activity,
+    profile?.activitySlugs,
+    profile?.areaLabel,
+    session,
+  ]);
 
   const selectedActivity =
     catalog.find((activity) => activity.slug === activitySlug) ?? catalog[0];
-  const selectedVenue = venues.find((venue) => venue.id === venueId) ?? venues[0];
+  const selectedVenue =
+    venueId === 'other' ? null : venues.find((venue) => venue.id === venueId) ?? null;
+  const effectiveDuration =
+    customDuration && customDurationText.trim()
+      ? Number(customDurationText)
+      : customDuration
+        ? Number.NaN
+        : durationMinutes;
   const startsAt = useMemo(() => {
+    if (customWhen) return parseLocalDateTime(customDate, customTime);
     if (mode === 'now') {
       const date = new Date(baseNow.getTime() + nowOffsetMinutes * 60_000);
       date.setSeconds(0, 0);
@@ -211,7 +286,17 @@ export default function CreateModeScreen() {
     const date = new Date(dayOptions[scheduledDay]?.date ?? dayOptions[1].date);
     date.setHours(scheduledHour, 0, 0, 0);
     return date;
-  }, [baseNow, dayOptions, mode, nowOffsetMinutes, scheduledDay, scheduledHour]);
+  }, [
+    baseNow,
+    customDate,
+    customTime,
+    customWhen,
+    dayOptions,
+    mode,
+    nowOffsetMinutes,
+    scheduledDay,
+    scheduledHour,
+  ]);
 
   if (mode === 'open') {
     return (
@@ -242,7 +327,15 @@ export default function CreateModeScreen() {
       setError('Choose an activity.');
       return;
     }
-    if (!selectedVenue) {
+    if (activitySlug === 'other' && !customActivityName.trim()) {
+      setError('Tell people what activity you have in mind.');
+      return;
+    }
+    if (venueId === 'other' && (!customVenueName.trim() || !customVenueArea.trim())) {
+      setError('Enter the public place name and its general area.');
+      return;
+    }
+    if (venueId !== 'other' && !selectedVenue) {
       setError('Choose a public venue.');
       return;
     }
@@ -250,8 +343,20 @@ export default function CreateModeScreen() {
       setError('Give your Catch a short title.');
       return;
     }
+    if (!startsAt) {
+      setError('Enter a valid date and time using the examples shown.');
+      return;
+    }
     if (startsAt.getTime() <= Date.now()) {
       setError('Choose a start time in the future.');
+      return;
+    }
+    if (
+      !Number.isInteger(effectiveDuration) ||
+      effectiveDuration < 15 ||
+      effectiveDuration > 480
+    ) {
+      setError('Duration must be a whole number from 15 to 480 minutes.');
       return;
     }
     if (!session) {
@@ -266,15 +371,18 @@ export default function CreateModeScreen() {
       activityTypeId: selectedActivity.id,
       approvalRequired,
       capacity,
+      customActivityName: activitySlug === 'other' ? customActivityName : '',
+      customVenueArea: venueId === 'other' ? customVenueArea : '',
+      customVenueName: venueId === 'other' ? customVenueName : '',
       description: note,
-      durationMinutes,
+      durationMinutes: effectiveDuration,
       hostId: session.user.id,
       intensity,
       kind: catchKind,
       minimumAge,
       startsAt: startsAt.toISOString(),
       title,
-      venue: selectedVenue,
+      venue: venueId === 'other' ? null : selectedVenue,
     };
     const result = editingId
       ? await updateCatch(editingId, input)
@@ -288,13 +396,15 @@ export default function CreateModeScreen() {
     router.replace('/my-catches');
   }
 
-  const startLabel = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(startsAt);
+  const startLabel = startsAt
+    ? new Intl.DateTimeFormat('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(startsAt)
+    : 'Enter a valid date and time';
 
   return (
     <Screen>
@@ -321,6 +431,20 @@ export default function CreateModeScreen() {
           );
         })}
       </View>
+      {activitySlug === 'other' ? (
+        <View style={styles.revealFields}>
+          <Text style={styles.revealLabel}>What activity?</Text>
+          <TextInput
+            accessibilityLabel="Custom activity"
+            maxLength={60}
+            onChangeText={setCustomActivityName}
+            placeholder="e.g. Wiffle ball, cornhole, kickball"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customActivityName}
+          />
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Catch title</Text>
       <TextInput
@@ -340,10 +464,18 @@ export default function CreateModeScreen() {
             <Chip
               key={offset}
               label={`In ${offset < 60 ? `${offset} min` : `${offset / 60} hr${offset > 60 ? 's' : ''}`}`}
-              onPress={() => setNowOffsetMinutes(offset)}
-              selected={nowOffsetMinutes === offset}
+              onPress={() => {
+                setCustomWhen(false);
+                setNowOffsetMinutes(offset);
+              }}
+              selected={!customWhen && nowOffsetMinutes === offset}
             />
           ))}
+          <Chip
+            label="Other time"
+            onPress={() => setCustomWhen(true)}
+            selected={customWhen}
+          />
         </View>
       ) : (
         <>
@@ -355,8 +487,11 @@ export default function CreateModeScreen() {
               <Chip
                 key={option.offset}
                 label={option.label}
-                onPress={() => setScheduledDay(option.offset)}
-                selected={scheduledDay === option.offset}
+                onPress={() => {
+                  setCustomWhen(false);
+                  setScheduledDay(option.offset);
+                }}
+                selected={!customWhen && scheduledDay === option.offset}
               />
             ))}
           </ScrollView>
@@ -365,13 +500,55 @@ export default function CreateModeScreen() {
               <Chip
                 key={option.hour}
                 label={option.label}
-                onPress={() => setScheduledHour(option.hour)}
-                selected={scheduledHour === option.hour}
+                onPress={() => {
+                  setCustomWhen(false);
+                  setScheduledHour(option.hour);
+                }}
+                selected={!customWhen && scheduledHour === option.hour}
               />
             ))}
+            <Chip
+              label="Other date/time"
+              onPress={() => setCustomWhen(true)}
+              selected={customWhen}
+            />
           </View>
         </>
       )}
+      {customWhen ? (
+        <View style={styles.revealFields}>
+          <Text style={styles.revealLabel}>Custom start</Text>
+          <View style={styles.customFieldRow}>
+            <View style={styles.customField}>
+              <Text style={styles.smallLabel}>Date</Text>
+              <TextInput
+                accessibilityLabel="Custom start date"
+                autoCapitalize="none"
+                keyboardType="numbers-and-punctuation"
+                onChangeText={setCustomDate}
+                placeholder="2026-07-26"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+                value={customDate}
+              />
+            </View>
+            <View style={styles.customField}>
+              <Text style={styles.smallLabel}>Time (24-hour)</Text>
+              <TextInput
+                accessibilityLabel="Custom start time"
+                autoCapitalize="none"
+                keyboardType="numbers-and-punctuation"
+                onChangeText={setCustomTime}
+                placeholder="18:30"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+                value={customTime}
+              />
+            </View>
+          </View>
+          <Text style={styles.helper}>Example: 2026-07-26 at 18:30 means July 26 at 6:30 PM.</Text>
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Duration</Text>
       <View style={styles.chips}>
@@ -379,11 +556,35 @@ export default function CreateModeScreen() {
           <Chip
             key={duration}
             label={`${duration} min`}
-            onPress={() => setDurationMinutes(duration)}
-            selected={durationMinutes === duration}
+            onPress={() => {
+              setCustomDuration(false);
+              setDurationMinutes(duration);
+            }}
+            selected={!customDuration && durationMinutes === duration}
           />
         ))}
+        <Chip
+          label="Other"
+          onPress={() => setCustomDuration(true)}
+          selected={customDuration}
+        />
       </View>
+      {customDuration ? (
+        <View style={styles.revealFields}>
+          <Text style={styles.revealLabel}>Custom duration in minutes</Text>
+          <TextInput
+            accessibilityLabel="Custom duration in minutes"
+            keyboardType="number-pad"
+            maxLength={3}
+            onChangeText={(value) => setCustomDurationText(value.replace(/\D/g, ''))}
+            placeholder="75"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customDurationText}
+          />
+          <Text style={styles.helper}>Choose any whole number from 15 minutes to 8 hours.</Text>
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Public venue</Text>
       <View style={styles.venueList}>
@@ -409,10 +610,52 @@ export default function CreateModeScreen() {
             </Pressable>
           );
         })}
+        <Pressable
+          accessibilityRole="radio"
+          accessibilityState={{ checked: venueId === 'other' }}
+          onPress={() => setVenueId('other')}
+          style={[styles.venue, venueId === 'other' && styles.venueSelected]}>
+          <View style={[styles.radio, venueId === 'other' && styles.radioSelected]}>
+            {venueId === 'other' ? <View style={styles.radioDot} /> : null}
+          </View>
+          <View style={styles.venueText}>
+            <Text style={styles.venueName}>Other public place</Text>
+            <Text style={styles.venueArea}>Enter a park, court, field, or other public venue</Text>
+          </View>
+        </Pressable>
       </View>
+      {venueId === 'other' ? (
+        <View style={styles.revealFields}>
+          <Text style={styles.revealLabel}>Public place name</Text>
+          <TextInput
+            accessibilityLabel="Custom public place name"
+            maxLength={100}
+            onChangeText={setCustomVenueName}
+            placeholder="e.g. Government Island Park"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customVenueName}
+          />
+          <Text style={styles.revealLabel}>General area</Text>
+          <TextInput
+            accessibilityLabel="Custom public place general area"
+            maxLength={100}
+            onChangeText={setCustomVenueArea}
+            placeholder="e.g. Stafford, VA"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customVenueArea}
+          />
+          <View style={styles.locationWarning}>
+            <Ionicons color={colors.orangeDark} name="shield-checkmark" size={18} />
+            <Text style={styles.locationWarningText}>
+              Public places only. Don’t enter a home address or another private location.
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <Text style={styles.helper}>
-        Only public venues are offered here. Private-address coordination will use a protected
-        approval flow later.
+        Private-address coordination will use a protected approval flow later.
       </Text>
 
       <Text style={styles.label}>Crew size</Text>
@@ -500,10 +743,14 @@ export default function CreateModeScreen() {
           <Text style={styles.previewEyebrow}>YOUR PREVIEW</Text>
           <Text style={styles.previewTitle}>{title.trim() || 'Untitled Catch'}</Text>
           <Text style={styles.previewBody}>
-            {startLabel} · {durationMinutes} min · {capacity} people
+            {startLabel} · {Number.isFinite(effectiveDuration) ? effectiveDuration : '—'} min ·{' '}
+            {capacity} people
           </Text>
           <Text style={styles.previewBody}>
-            {selectedVenue?.name ?? 'Choose a venue'} · {minimumAge}+
+            {venueId === 'other'
+              ? customVenueName.trim() || 'Enter a public place'
+              : selectedVenue?.name ?? 'Choose a venue'}{' '}
+            · {minimumAge}+
           </Text>
         </View>
       </View>
@@ -584,6 +831,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: 14,
   },
+  revealFields: {
+    gap: 8,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    padding: 13,
+  },
+  revealLabel: { color: colors.ink, fontSize: 12, fontWeight: '800' },
+  customFieldRow: { flexDirection: 'row', gap: 10 },
+  customField: { flex: 1, gap: 6 },
+  smallLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   horizontalChoices: { gap: 8, paddingBottom: 10 },
   venueList: { gap: 9 },
@@ -614,6 +874,21 @@ const styles = StyleSheet.create({
   venueName: { color: colors.ink, fontSize: 14, fontWeight: '800' },
   venueArea: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   helper: { marginTop: 7, color: colors.muted, fontSize: 10, lineHeight: 15 },
+  locationWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: radius.sm,
+    backgroundColor: colors.paleOrange,
+    padding: 11,
+  },
+  locationWarningText: {
+    flex: 1,
+    color: colors.orangeDark,
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 15,
+  },
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   counterButton: {
     width: 43,
