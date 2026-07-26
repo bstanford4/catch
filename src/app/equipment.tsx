@@ -15,6 +15,7 @@ import {
   deleteEquipment,
   type EquipmentItem,
   listEquipment,
+  updateEquipment,
 } from '@/services/equipment-service';
 
 type ActivityOption = {
@@ -46,12 +47,14 @@ export default function EquipmentScreen() {
   const [catalog, setCatalog] = useState<ActivityOption[]>([]);
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [showForm, setShowForm] = useState(false);
+  const [editingItem, setEditingItem] = useState<EquipmentItem | null>(null);
   const [name, setName] = useState('');
   const [activityTypeId, setActivityTypeId] = useState('');
   const [condition, setCondition] = useState('Good');
   const [quantity, setQuantity] = useState(1);
   const [canShare, setCanShare] = useState(false);
   const [photoUri, setPhotoUri] = useState<string>();
+  const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState('');
@@ -61,6 +64,8 @@ export default function EquipmentScreen() {
     () => new Map(catalog.map((activity) => [activity.id, activity])),
     [catalog],
   );
+  const previewPhotoUri =
+    photoUri ?? (!removeExistingPhoto ? editingItem?.photoUrl ?? undefined : undefined);
 
   useEffect(() => {
     if (!session || !supabase) return;
@@ -126,7 +131,10 @@ export default function EquipmentScreen() {
             mediaTypes: ['images'],
             quality: 0.9,
           });
-    if (!result.canceled) setPhotoUri(result.assets[0]?.uri);
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0]?.uri);
+      setRemoveExistingPhoto(false);
+    }
   }
 
   function resetForm() {
@@ -135,10 +143,26 @@ export default function EquipmentScreen() {
     setQuantity(1);
     setCanShare(false);
     setPhotoUri(undefined);
+    setRemoveExistingPhoto(false);
+    setEditingItem(null);
     setShowForm(false);
   }
 
-  async function addItem() {
+  function editItem(item: EquipmentItem) {
+    setEditingItem(item);
+    setName(item.name);
+    setActivityTypeId(item.activityTypeId);
+    setCondition(item.condition ?? 'Good');
+    setQuantity(item.quantity);
+    setCanShare(item.canShare);
+    setPhotoUri(undefined);
+    setRemoveExistingPhoto(false);
+    setConfirmDeleteId('');
+    setError('');
+    setShowForm(true);
+  }
+
+  async function saveItem() {
     if (!session) {
       setError('Sign in to add equipment.');
       return;
@@ -154,7 +178,7 @@ export default function EquipmentScreen() {
 
     setIsSaving(true);
     setError('');
-    const result = await createEquipment({
+    const input = {
       activityTypeId,
       canShare,
       condition,
@@ -162,7 +186,14 @@ export default function EquipmentScreen() {
       photoUri,
       quantity,
       userId: session.user.id,
-    });
+    };
+    const result = editingItem
+      ? await updateEquipment({
+          ...input,
+          item: editingItem,
+          removeExistingPhoto,
+        })
+      : await createEquipment(input);
     setIsSaving(false);
     if (result.error || !result.data) {
       setError(
@@ -172,7 +203,11 @@ export default function EquipmentScreen() {
       );
       return;
     }
-    setItems((current) => [result.data!, ...current]);
+    setItems((current) =>
+      editingItem
+        ? current.map((item) => (item.id === result.data!.id ? result.data! : item))
+        : [result.data!, ...current],
+    );
     resetForm();
   }
 
@@ -214,7 +249,7 @@ export default function EquipmentScreen() {
       {showForm ? (
         <View style={styles.formCard}>
           <View style={styles.formHeading}>
-            <Text style={styles.formTitle}>Add an item</Text>
+            <Text style={styles.formTitle}>{editingItem ? 'Edit item' : 'Add an item'}</Text>
             <Pressable accessibilityLabel="Close add equipment form" onPress={resetForm}>
               <Ionicons color={colors.muted} name="close" size={24} />
             </Pressable>
@@ -300,12 +335,15 @@ export default function EquipmentScreen() {
           </Pressable>
 
           <Text style={styles.label}>Photo (optional)</Text>
-          {photoUri ? (
+          {previewPhotoUri ? (
             <View style={styles.photoPreview}>
-              <Image contentFit="cover" source={photoUri} style={styles.photo} />
+              <Image contentFit="cover" source={previewPhotoUri} style={styles.photo} />
               <Pressable
-                accessibilityLabel="Remove selected photo"
-                onPress={() => setPhotoUri(undefined)}
+                accessibilityLabel="Remove equipment photo"
+                onPress={() => {
+                  setPhotoUri(undefined);
+                  setRemoveExistingPhoto(true);
+                }}
                 style={styles.removePhoto}>
                 <Ionicons color={colors.white} name="close" size={18} />
               </Pressable>
@@ -324,8 +362,8 @@ export default function EquipmentScreen() {
 
           <Button
             disabled={isSaving}
-            label={isSaving ? 'Saving item…' : 'Save equipment'}
-            onPress={addItem}
+            label={isSaving ? 'Saving item…' : editingItem ? 'Save changes' : 'Save equipment'}
+            onPress={saveItem}
           />
         </View>
       ) : null}
@@ -366,20 +404,33 @@ export default function EquipmentScreen() {
                 </Text>
                 {item.canShare ? <Text style={styles.shareBadge}>AVAILABLE TO SHARE</Text> : null}
               </View>
-              <Pressable
-                accessibilityLabel={`Remove ${item.name}`}
-                disabled={deletingId === item.id}
-                onPress={() => removeItem(item)}
-                style={styles.deleteButton}>
-                <Ionicons
-                  color={confirmDeleteId === item.id ? colors.error : colors.muted}
-                  name={confirmDeleteId === item.id ? 'checkmark-circle-outline' : 'trash-outline'}
-                  size={20}
-                />
-                {confirmDeleteId === item.id ? (
-                  <Text style={styles.confirmText}>Confirm</Text>
-                ) : null}
-              </Pressable>
+              <View style={styles.itemActions}>
+                <Pressable
+                  accessibilityLabel={`Edit ${item.name}`}
+                  onPress={() => editItem(item)}
+                  style={styles.itemActionButton}>
+                  <Ionicons color={colors.forest} name="pencil-outline" size={19} />
+                  <Text style={styles.editText}>Edit</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityLabel={`Remove ${item.name}`}
+                  disabled={deletingId === item.id}
+                  onPress={() => removeItem(item)}
+                  style={styles.itemActionButton}>
+                  <Ionicons
+                    color={confirmDeleteId === item.id ? colors.error : colors.muted}
+                    name={confirmDeleteId === item.id ? 'checkmark-circle-outline' : 'trash-outline'}
+                    size={20}
+                  />
+                  <Text
+                    style={[
+                      styles.actionText,
+                      confirmDeleteId === item.id && styles.confirmText,
+                    ]}>
+                    {confirmDeleteId === item.id ? 'Confirm' : 'Remove'}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           );
         })}
@@ -558,8 +609,11 @@ const styles = StyleSheet.create({
   itemName: { color: colors.ink, fontSize: 15, fontWeight: '900' },
   itemMeta: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   shareBadge: { color: colors.orangeDark, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
-  deleteButton: { alignItems: 'center', gap: 2, padding: 7 },
-  confirmText: { color: colors.error, fontSize: 9, fontWeight: '800' },
+  itemActions: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  itemActionButton: { alignItems: 'center', gap: 2, padding: 6 },
+  editText: { color: colors.forest, fontSize: 9, fontWeight: '800' },
+  actionText: { color: colors.muted, fontSize: 9, fontWeight: '800' },
+  confirmText: { color: colors.error },
   privacyNote: {
     flexDirection: 'row',
     gap: 10,
