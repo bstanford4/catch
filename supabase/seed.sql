@@ -1,16 +1,16 @@
 insert into public.activity_types (slug, name, emoji, sort_order) values
-  ('baseball', 'Baseball', '⚾', 10),
-  ('softball', 'Softball', '🥎', 20),
-  ('football', 'Football', '🏈', 30),
-  ('frisbee', 'Frisbee', '🥏', 40),
-  ('lacrosse', 'Lacrosse', '🥍', 50),
-  ('soccer', 'Soccer', '⚽', 60),
-  ('basketball', 'Basketball', '🏀', 70),
-  ('tennis', 'Tennis', '🎾', 80),
-  ('pickleball', 'Pickleball', '🏓', 90),
-  ('pong', 'Pong', '🏓', 100),
-  ('die', 'Die', '🎲', 110),
-  ('other', 'Other', '✨', 120)
+  ('baseball', 'Baseball', U&'\26BE', 10),
+  ('softball', 'Softball', U&'\+01F94E', 20),
+  ('football', 'Football', U&'\+01F3C8', 30),
+  ('frisbee', 'Frisbee', U&'\+01F94F', 40),
+  ('lacrosse', 'Lacrosse', U&'\+01F94D', 50),
+  ('soccer', 'Soccer', U&'\26BD', 60),
+  ('basketball', 'Basketball', U&'\+01F3C0', 70),
+  ('tennis', 'Tennis', U&'\+01F3BE', 80),
+  ('pickleball', 'Pickleball', U&'\+01F3D3', 90),
+  ('pong', 'Pong', U&'\+01F3D3', 100),
+  ('die', 'Die', U&'\+01F3B2', 110),
+  ('other', 'Other', U&'\2728', 120)
 on conflict (slug) do update set
   name = excluded.name,
   emoji = excluded.emoji,
@@ -64,4 +64,3 @@ values
     true
   )
 on conflict do nothing;
-

@@ -9,11 +9,19 @@ The local Expo demo does not require Supabase. To enable the backend:
 4. In a new query, paste
    `migrations/202607250002_equipment_storage.sql`, and run it once. This creates
    the private, owner-scoped equipment photo bucket and its Storage RLS policies.
-5. Run `seed.sql` for catalog and public-venue demo records.
-6. Copy `.env.example` to `.env` and add the project URL and client-safe
+5. Run `migrations/202607250003_repair_activity_emoji.sql` once. It safely repairs
+   activity emoji if the seed was copied through a legacy Windows text encoding.
+6. Run `seed.sql` for catalog and public-venue demo records.
+7. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-7. Add `catch://**` to the project's Auth redirect URLs.
-8. Restart Expo so client environment variables are rebundled.
+8. Add `catch://**` to the project's Auth redirect URLs.
+9. Restart Expo so client environment variables are rebundled.
+
+When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
+
+```powershell
+Get-Content -Encoding utf8 -Raw .\supabase\seed.sql | Set-Clipboard
+```
 
 With the CLI:
 

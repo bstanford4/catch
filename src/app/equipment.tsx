@@ -25,6 +25,20 @@ type ActivityOption = {
 };
 
 const conditions = ['Excellent', 'Good', 'Well-loved'];
+const activityEmojiBySlug: Record<string, string> = {
+  baseball: '⚾',
+  softball: '🥎',
+  football: '🏈',
+  frisbee: '🥏',
+  lacrosse: '🥍',
+  soccer: '⚽',
+  basketball: '🏀',
+  tennis: '🎾',
+  pickleball: '🏓',
+  pong: '🏓',
+  die: '🎲',
+  other: '✨',
+};
 
 export default function EquipmentScreen() {
   const { profile, session } = useAuth();
@@ -65,7 +79,12 @@ export default function EquipmentScreen() {
       if (activityResult.error) {
         setError(activityResult.error.message);
       } else {
-        const rows = (activityResult.data ?? []) as ActivityOption[];
+        const rows = ((activityResult.data ?? []) as ActivityOption[]).map((activity) => ({
+          ...activity,
+          // Use the local catalog for display so a legacy encoding problem in
+          // seeded database text cannot leak into the interface.
+          emoji: activityEmojiBySlug[activity.slug] ?? activity.emoji ?? '🏅',
+        }));
         const sorted = [...rows].sort((a, b) => {
           const aPreferred = preferredSlugs.includes(a.slug) ? 0 : 1;
           const bPreferred = preferredSlugs.includes(b.slug) ? 0 : 1;
