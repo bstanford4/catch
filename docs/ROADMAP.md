@@ -25,9 +25,11 @@
 
 Supabase account creation, email login, session persistence, logout, and initial
 profile onboarding are connected. First name, broad area, favorite activities,
-discovery radius, and optional 21+ affirmation persist to Supabase. Remaining
-work is image upload, availability, equipment, expanded privacy settings,
-account deletion, and contextual permissions.
+discovery radius, optional 21+ affirmation, broad recurring availability, and
+equipment persist to Supabase. Equipment supports optional compressed camera or
+photo-library images in a private owner-scoped Storage bucket. Remaining work is
+profile photo upload, expanded privacy settings, account deletion, and
+additional contextual permissions.
 
 ### Phase 3 — venues and location
 
@@ -93,9 +95,10 @@ justify one.
 ## Known limitations
 
 - Phase 1 data is local and fictional.
-- Authentication and initial profile onboarding are connected when Supabase
-  credentials and migrations are configured. Availability, equipment, profile
-  photos, and account deletion remain deferred.
-- Map, push, realtime, moderation operations, and uploads are interfaces or schema
+- Authentication, initial profile onboarding, availability, equipment, and
+  private equipment-photo uploads are connected when Supabase credentials and
+  migrations are configured. Profile photos and account deletion remain
+  deferred.
+- Map, push, realtime, and moderation operations are interfaces or schema
   foundations, not production integrations.
 - Native device and app-store validation require external accounts and hardware.

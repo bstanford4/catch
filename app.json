@@ -26,6 +26,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Catch uses your selected photos to show sporting equipment on your profile.",
+          "cameraPermission": "Catch uses the camera when you choose to photograph sporting equipment.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#173E2B",

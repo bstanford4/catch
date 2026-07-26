@@ -6,11 +6,14 @@ The local Expo demo does not require Supabase. To enable the backend:
 2. Install the Supabase CLI or use the dashboard SQL editor.
 3. Open **SQL Editor**, create a new query, paste
    `migrations/202607240001_initial_schema.sql`, and run it once.
-4. Run `seed.sql` for catalog and public-venue demo records.
-5. Copy `.env.example` to `.env` and add the project URL and client-safe
+4. In a new query, paste
+   `migrations/202607250002_equipment_storage.sql`, and run it once. This creates
+   the private, owner-scoped equipment photo bucket and its Storage RLS policies.
+5. Run `seed.sql` for catalog and public-venue demo records.
+6. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-6. Add `catch://**` to the project's Auth redirect URLs.
-7. Restart Expo so client environment variables are rebundled.
+7. Add `catch://**` to the project's Auth redirect URLs.
+8. Restart Expo so client environment variables are rebundled.
 
 With the CLI:
 

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -9,22 +10,23 @@ import { Screen } from '@/components/ui/screen';
 import { colors, radius, spacing } from '@/constants/theme';
 import { activities } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
+import { listAvailability } from '@/services/availability-service';
+import { listEquipment } from '@/services/equipment-service';
 
-const settings: {
+type Setting = {
   icon: ComponentProps<typeof Ionicons>['name'];
   label: string;
   detail: string;
-}[] = [
-  { icon: 'person-outline', label: 'Edit profile', detail: 'Photo, activities, bio' },
-  { icon: 'basketball-outline', label: 'Equipment', detail: '4 items · 1 extra glove' },
-  { icon: 'time-outline', label: 'Availability', detail: 'Wed & Fri afternoons' },
-  { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
-  { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
-];
+  onPress?: () => void;
+};
+
+const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { profile, session, signOut } = useAuth();
+  const [equipmentDetail, setEquipmentDetail] = useState('Nothing added yet');
+  const [availabilityDetail, setAvailabilityDetail] = useState('Not set yet');
   const displayName = profile?.firstName ?? 'Blake';
   const initials =
     displayName
@@ -36,13 +38,68 @@ export default function ProfileScreen() {
   const selectedActivities = profile
     ? activities.filter((activity) => profile.activitySlugs.includes(activity.id)).slice(0, 3)
     : activities.filter((activity) => ['baseball', 'football', 'frisbee'].includes(activity.id));
-  const visibleSettings = session
-    ? settings.map((setting) => {
-        if (setting.label === 'Equipment') return { ...setting, detail: 'Nothing added yet' };
-        if (setting.label === 'Availability') return { ...setting, detail: 'Not set yet' };
-        return setting;
-      })
-    : settings;
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) return;
+      let active = true;
+      void Promise.all([
+        listEquipment(session.user.id),
+        listAvailability(session.user.id),
+      ]).then(([equipment, availability]) => {
+        if (!active) return;
+        if (!equipment.error) {
+          const shareable = equipment.data.filter((item) => item.canShare).length;
+          setEquipmentDetail(
+            equipment.data.length
+              ? `${equipment.data.length} ${equipment.data.length === 1 ? 'item' : 'items'} · ${shareable} shareable`
+              : 'Nothing added yet',
+          );
+        }
+        if (!availability.error) {
+          const days = [...new Set(availability.data.map((window) => window.weekday))];
+          const timeWindows = [...new Set(availability.data.map((window) => window.broadPeriod))];
+          const dayLabel =
+            days.length <= 2 ? days.map((day) => dayNames[day]).join(' & ') : `${days.length} days`;
+          const timeLabel =
+            timeWindows.length === 1
+              ? `${timeWindows[0]}s`
+              : `${timeWindows.length} time windows`;
+          setAvailabilityDetail(
+            days.length && timeWindows.length ? `${dayLabel} · ${timeLabel}` : 'Not set yet',
+          );
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }, [session]),
+  );
+
+  const visibleSettings: Setting[] = session
+    ? [
+        { icon: 'person-outline', label: 'Edit profile', detail: 'Photo, activities, bio' },
+        {
+          icon: 'basketball-outline',
+          label: 'Equipment',
+          detail: equipmentDetail,
+          onPress: () => router.push('/equipment'),
+        },
+        {
+          icon: 'time-outline',
+          label: 'Availability',
+          detail: availabilityDetail,
+          onPress: () => router.push('/availability'),
+        },
+        { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
+        { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
+      ]
+    : [
+        { icon: 'person-outline', label: 'Edit profile', detail: 'Photo, activities, bio' },
+        { icon: 'basketball-outline', label: 'Equipment', detail: '4 items · 1 extra glove' },
+        { icon: 'time-outline', label: 'Availability', detail: 'Wed & Fri afternoons' },
+        { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
+        { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
+      ];
 
   async function leaveAccount() {
     if (session) {
@@ -120,6 +177,7 @@ export default function ProfileScreen() {
           <Pressable
             accessibilityLabel={`${item.label}. ${item.detail}`}
             key={item.label}
+            onPress={item.onPress}
             style={({ pressed }) => [styles.settingRow, pressed && styles.pressed]}>
             <View style={styles.settingIcon}>
               <Ionicons color={colors.forest} name={item.icon} size={20} />
@@ -128,7 +186,9 @@ export default function ProfileScreen() {
               <Text style={styles.settingLabel}>{item.label}</Text>
               <Text style={styles.settingDetail}>{item.detail}</Text>
             </View>
-            <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+            {item.onPress ? (
+              <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+            ) : null}
           </Pressable>
         ))}
       </View>

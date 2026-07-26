@@ -3,11 +3,12 @@
 Catch is an activity-first mobile app for adults who want to find someone nearby
 for a casual, low-commitment recreational activity.
 
-The app includes a polished seeded demo plus a live Supabase authentication
-connection. It runs without credentials in demo mode and establishes the product
-shell, navigation, design system, account creation and sign-in, discovery feed,
-creation flow, messages, profile, empty/loading/error states, and backend
-boundaries needed for later phases.
+The app includes a polished seeded demo plus live Supabase-backed authentication,
+profile onboarding, broad availability, and equipment management. It runs
+without credentials in demo mode and establishes the product shell, navigation,
+design system, account creation and sign-in, discovery feed, creation flow,
+messages, profile, empty/loading/error states, and backend boundaries needed for
+later phases.
 
 ## Stack
 
@@ -68,9 +69,11 @@ secret.
 
 ## Current scope
 
-Phase 0 and Phase 1 are implemented. Phase 2 authentication and initial profile
-onboarding are connected: account creation, email confirmation, sign-in,
-persisted sessions, sign-out, first name, broad area, activity preferences,
-discovery radius, and 21+ affirmation use Supabase when credentials are present.
-Native push credentials, production maps, and app-store releases are
-intentionally deferred. See the roadmap for details.
+Phase 0 and Phase 1 are implemented. Phase 2 authentication, initial profile
+onboarding, broad availability, and equipment are connected: account creation,
+email confirmation, sign-in, persisted sessions, sign-out, first name, broad
+area, activity preferences, discovery radius, 21+ affirmation, expiring
+availability windows, equipment records, and private compressed equipment photos
+use Supabase when credentials are present. Native push credentials, production
+maps, and app-store releases are intentionally deferred. See the roadmap for
+details.
