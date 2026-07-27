@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
@@ -129,6 +128,12 @@ export default function MyCatchesScreen() {
                     params: { catchId: item.id, mode: item.kind },
                   })
                 }
+                onRequests={() =>
+                  router.push({
+                    pathname: '/catch-requests/[id]',
+                    params: { id: item.id },
+                  })
+                }
               />
             ))}
           </View>
@@ -155,12 +160,14 @@ function HostedCatchCard({
   item,
   onCancel,
   onEdit,
+  onRequests,
 }: {
   canceling?: boolean;
   confirmingCancel?: boolean;
   item: HostedCatch;
   onCancel?: () => void;
   onEdit?: () => void;
+  onRequests?: () => void;
 }) {
   const startLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -196,13 +203,34 @@ function HostedCatchCard({
         <View style={styles.metaRow}>
           <Ionicons color={colors.forestSoft} name="location-outline" size={15} />
           <Text numberOfLines={1} style={styles.meta}>
-            {item.customVenueName ?? item.venue?.name ?? item.customVenueArea ?? 'Venue unavailable'}{' '}
+            {item.locationType === 'private'
+              ? `Protected private spot near ${item.customVenueArea}`
+              : item.locationType === 'later'
+                ? `Near ${item.customVenueArea} · exact spot later`
+                : item.customVenueName ?? item.venue?.name ?? item.customVenueArea ?? 'Venue unavailable'}{' '}
             · {item.capacity} people
           </Text>
         </View>
         {active && onEdit && onCancel ? (
           <View style={styles.actions}>
-            <Button icon="pencil-outline" label="Edit" onPress={onEdit} variant="secondary" />
+            <Pressable
+              accessibilityRole="button"
+              onPress={onRequests}
+              style={({ pressed }) => [styles.requestButton, pressed && styles.pressed]}>
+              <Ionicons color={colors.forest} name="people-outline" size={17} />
+              <Text style={styles.requestText}>Requests</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onEdit}
+              style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}>
+              <Ionicons color={colors.forest} name="pencil-outline" size={17} />
+              <Text style={styles.requestText}>Edit</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {active && onEdit && onCancel ? (
+          <View style={styles.actions}>
             <Pressable
               accessibilityRole="button"
               disabled={canceling}
@@ -277,6 +305,31 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   meta: { flex: 1, color: colors.muted, fontSize: 11 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
+  requestButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 13,
+    backgroundColor: colors.paper,
+  },
+  editButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 42,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 13,
+    backgroundColor: colors.paper,
+  },
+  requestText: { color: colors.forest, fontSize: 12, fontWeight: '800' },
   cancelButton: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 52 },
   cancelText: { color: colors.error, fontSize: 12, fontWeight: '800' },
   pressed: { opacity: 0.75 },

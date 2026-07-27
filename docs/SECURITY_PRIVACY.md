@@ -22,6 +22,12 @@ content leaking sensitive details.
   include an address.
 - Exact residential coordinates are not required for standing availability.
 
+The current implementation encrypts each private meeting payload with pgcrypto.
+Its application key is generated and retained in Supabase Vault. A
+security-definer database function checks that the caller is the host or an
+approved participant before decrypting the payload; discovery and pending join
+requests receive only the Catch's broad area label.
+
 PostGIS provides accurate radius queries and spatial indexes. The tradeoff is
 additional local setup and careful safe-view design; it is justified because
 distance discovery is core. Coarse search points should be deliberately rounded
@@ -77,4 +83,3 @@ Blocking must:
 - Rate limits for auth, discovery, proposals, messages, reports, and invites.
 - App-store age rating and alcohol-reference review.
 - Incident response and urgent safety escalation process.
-

@@ -33,8 +33,10 @@ additional contextual permissions.
 
 ### Phase 3 — venues and location
 
-Provision PostGIS, ship safe discovery RPCs, public/private venue flows, radius
-controls, map adapter, and private-location access tests.
+PostGIS, public/custom/private/decide-later creation, encrypted private details,
+and approval-gated private-location access are implemented. Remaining work is
+true radius filtering, a production map adapter and pin picker, geocoding,
+private-location access audit events, and dedicated access-policy tests.
 
 ### Phase 4 — creation
 
@@ -48,8 +50,10 @@ geocoding, and cancellation audit events.
 
 ### Phase 5 — discovery and proposals
 
-Compatibility scoring, list/map modes, proposals and immutable revisions, join
-requests, invitations, transactional acceptance, and low-density notifications.
+Live list discovery, join requests, transactional host approval, and protected
+location release are implemented. Remaining work is compatibility scoring, map
+mode, proposals and immutable revisions, invitations, and low-density
+notifications.
 
 ### Phase 6 — messages and notifications
 
@@ -105,6 +109,12 @@ justify one.
   migrations are configured. Catch Now and scheduled Catch creation and host
   management are also connected. Profile photos, account deletion, and Open to
   Catch publishing remain deferred.
+- The private-spot form accepts an exact address or meeting instructions and the
+  database supports encrypted coordinates, but the visual drop-pin picker and
+  geocoding wait on a production map provider.
+- Discovery currently filters by broad visibility and time, not geographic
+  distance; the "within 10 miles" label remains aspirational until safe PostGIS
+  radius queries are connected.
 - Map, push, realtime, and moderation operations are interfaces or schema
   foundations, not production integrations.
 - Native device and app-store validation require external accounts and hardware.

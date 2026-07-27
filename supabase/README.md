@@ -11,11 +11,14 @@ The local Expo demo does not require Supabase. To enable the backend:
    the private, owner-scoped equipment photo bucket and its Storage RLS policies.
 5. Run `migrations/202607250003_repair_activity_emoji.sql` once. It safely repairs
    activity emoji if the seed was copied through a legacy Windows text encoding.
-6. Run `seed.sql` for catalog and public-venue demo records.
-7. Copy `.env.example` to `.env` and add the project URL and client-safe
+6. Run `migrations/202607260004_private_locations_and_join_requests.sql` once.
+   It adds discovery policies, encrypted private-location functions, join
+   requests, and transactional host approval.
+7. Run `seed.sql` for catalog and public-venue demo records.
+8. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-8. Add `catch://**` to the project's Auth redirect URLs.
-9. Restart Expo so client environment variables are rebundled.
+9. Add `catch://**` to the project's Auth redirect URLs.
+10. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 
@@ -47,6 +50,7 @@ the same fixtures will be moved into an authenticated development seed script.
 
 RLS is enabled in the initial migration. Data API grants are explicit because the
 project is created with automatic new-table exposure disabled. The included policies are a foundation,
-not a substitute for a launch security review. In particular, private location
-decryption should happen in a trusted server function after participant
-authorization and should create an access audit event.
+not a substitute for a launch security review. Private location decryption now
+happens in an authorization-checked security-definer function after participant
+approval. A launch hardening pass must add immutable access audit events and
+rate limits.

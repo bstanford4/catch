@@ -1,17 +1,71 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { ActivityCard } from '@/components/activity-card';
 import { CatchMateRow } from '@/components/catch-mate-row';
+import { HostedCatchCard } from '@/components/hosted-catch-card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
+import { StatePanel } from '@/components/ui/state-panel';
 import { activities, catches, catchMates } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
+import { useAuth } from '@/providers/auth-provider';
+import { type HostedCatch, listDiscoverableCatches } from '@/services/catch-service';
 
 export default function DiscoverScreen() {
+  const { session } = useAuth();
   const [selected, setSelected] = useState('All');
   const [mode, setMode] = useState<'Catches' | 'People'>('Catches');
+  const [query, setQuery] = useState('');
+  const [liveCatches, setLiveCatches] = useState<HostedCatch[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(session));
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    if (!session) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    const result = await listDiscoverableCatches(session.user.id);
+    setLiveCatches(result.data);
+    setError(result.error ?? '');
+    setIsLoading(false);
+  }, [session]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+
+  const activityChoices = useMemo(
+    () =>
+      session
+        ? Array.from(
+            new Set(liveCatches.map((item) => item.customActivityName ?? item.activity.name)),
+          )
+        : activities.slice(0, 5).map((item) => item.name),
+    [liveCatches, session],
+  );
+  const filtered = liveCatches.filter((item) => {
+    const activity = item.customActivityName ?? item.activity.name;
+    const location = item.customVenueName ?? item.venue?.name ?? item.customVenueArea ?? '';
+    const matchesActivity = selected === 'All' || activity === selected;
+    const haystack = `${item.title} ${activity} ${location}`.toLowerCase();
+    return matchesActivity && haystack.includes(query.trim().toLowerCase());
+  });
 
   return (
     <Screen>
@@ -23,9 +77,11 @@ export default function DiscoverScreen() {
         <Ionicons color={colors.muted} name="search" size={20} />
         <TextInput
           accessibilityLabel="Search activities or venues"
+          onChangeText={setQuery}
           placeholder="Activity, venue, or keyword"
           placeholderTextColor={colors.muted}
           style={styles.searchInput}
+          value={query}
         />
         <Pressable accessibilityLabel="Open discovery filters" style={styles.filterButton}>
           <Ionicons color={colors.white} name="options" size={19} />
@@ -49,7 +105,7 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.chips}
         horizontal
         showsHorizontalScrollIndicator={false}>
-        {['All', ...activities.slice(0, 5).map((item) => item.name)].map((item) => (
+        {['All', ...activityChoices].map((item) => (
           <Chip
             key={item}
             label={item}
@@ -61,7 +117,9 @@ export default function DiscoverScreen() {
 
       <View style={styles.resultRow}>
         <Text style={styles.resultCount}>
-          {mode === 'Catches' ? `${catches.length} catches nearby` : `${catchMates.length} people open`}
+          {mode === 'Catches'
+            ? `${session ? filtered.length : catches.length} catches nearby`
+            : `${catchMates.length} people open`}
         </Text>
         <Pressable accessibilityRole="button" style={styles.mapButton}>
           <Ionicons color={colors.forest} name="map-outline" size={16} />
@@ -70,9 +128,29 @@ export default function DiscoverScreen() {
       </View>
 
       <View style={styles.list}>
-        {mode === 'Catches'
+        {mode === 'Catches' && isLoading ? (
+          <View style={styles.loading}>
+            <ActivityIndicator color={colors.orange} />
+            <Text style={styles.loadingText}>Checking nearby Catches...</Text>
+          </View>
+        ) : null}
+        {mode === 'Catches' && error ? <Text style={styles.error}>{error}</Text> : null}
+        {mode === 'Catches' && session && !isLoading && !error && filtered.length === 0 ? (
+          <StatePanel
+            body="Try another activity or check back after someone nearby posts a Catch."
+            icon="compass-outline"
+            title="Nothing matches yet"
+          />
+        ) : null}
+        {mode === 'Catches' && session
+          ? filtered.map((item) => <HostedCatchCard item={item} key={item.id} />)
+          : null}
+        {mode === 'Catches' && !session
           ? catches.map((item) => <ActivityCard item={item} key={item.id} />)
-          : catchMates.map((mate) => <CatchMateRow key={mate.id} mate={mate} />)}
+          : null}
+        {mode === 'People'
+          ? catchMates.map((mate) => <CatchMateRow key={mate.id} mate={mate} />)
+          : null}
       </View>
     </Screen>
   );
@@ -179,5 +257,7 @@ const styles = StyleSheet.create({
   list: {
     gap: 13,
   },
+  loading: { alignItems: 'center', gap: 9, paddingVertical: spacing.xl },
+  loadingText: { color: colors.muted, fontSize: 12 },
+  error: { color: colors.error, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 });
-

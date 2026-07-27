@@ -13,9 +13,11 @@ import { useAuth } from '@/providers/auth-provider';
 import {
   type CatchCatalogActivity,
   type CatchInput,
+  type CatchLocationType,
   type CatchVenue,
   createCatch,
   getHostedCatch,
+  getPrivateCatchLocation,
   loadCatchCatalog,
   updateCatch,
 } from '@/services/catch-service';
@@ -133,8 +135,13 @@ export default function CreateModeScreen() {
   const [activitySlug, setActivitySlug] = useState(initialActivity.id);
   const [customActivityName, setCustomActivityName] = useState('');
   const [venueId, setVenueId] = useState(demoVenues[0].id);
+  const [locationType, setLocationType] = useState<CatchLocationType>('catalog');
   const [customVenueName, setCustomVenueName] = useState('');
   const [customVenueArea, setCustomVenueArea] = useState(profile?.areaLabel ?? '');
+  const [privatePlaceName, setPrivatePlaceName] = useState('');
+  const [privateAddress, setPrivateAddress] = useState('');
+  const [privateArrivalNotes, setPrivateArrivalNotes] = useState('');
+  const [privateLocationConfirmed, setPrivateLocationConfirmed] = useState(false);
   const [title, setTitle] = useState(`${initialActivity.name} catch`);
   const [durationMinutes, setDurationMinutes] = useState(45);
   const [customDuration, setCustomDuration] = useState(false);
@@ -185,7 +192,10 @@ export default function CreateModeScreen() {
       editingId
         ? getHostedCatch(editingId, session.user.id)
         : Promise.resolve({ data: null, error: null }),
-    ]).then(([catalogResult, catchResult]) => {
+      editingId
+        ? getPrivateCatchLocation(editingId)
+        : Promise.resolve({ data: null, error: null }),
+    ]).then(([catalogResult, catchResult, privateLocationResult]) => {
       if (!active) return;
       if (catalogResult.error) {
         setError(catalogResult.error);
@@ -208,6 +218,7 @@ export default function CreateModeScreen() {
           const chosen = requested ?? sorted[0];
           setActivitySlug(chosen?.slug ?? 'baseball');
           setVenueId(catalogResult.venues[0]?.id ?? '');
+          setLocationType(catalogResult.venues[0] ? 'catalog' : 'custom_public');
           if (chosen) setTitle(`${chosen.name} catch`);
         }
       }
@@ -221,6 +232,7 @@ export default function CreateModeScreen() {
         setActivitySlug(item.activity.slug);
         setCustomActivityName(item.customActivityName ?? '');
         setVenueId(item.venue?.id ?? 'other');
+        setLocationType(item.locationType);
         setCustomVenueName(item.customVenueName ?? '');
         setCustomVenueArea(item.customVenueArea ?? profile?.areaLabel ?? '');
         setTitle(item.title);
@@ -251,6 +263,14 @@ export default function CreateModeScreen() {
           }
         }
       }
+      if (privateLocationResult.error && catchResult.data?.locationType === 'private') {
+        setError(privateLocationResult.error);
+      } else if (privateLocationResult.data) {
+        setPrivatePlaceName(privateLocationResult.data.placeName);
+        setPrivateAddress(privateLocationResult.data.exactAddress);
+        setPrivateArrivalNotes(privateLocationResult.data.arrivalNotes ?? '');
+        setPrivateLocationConfirmed(true);
+      }
       setIsLoading(false);
     });
 
@@ -269,7 +289,7 @@ export default function CreateModeScreen() {
   const selectedActivity =
     catalog.find((activity) => activity.slug === activitySlug) ?? catalog[0];
   const selectedVenue =
-    venueId === 'other' ? null : venues.find((venue) => venue.id === venueId) ?? null;
+    locationType === 'catalog' ? venues.find((venue) => venue.id === venueId) ?? null : null;
   const effectiveDuration =
     customDuration && customDurationText.trim()
       ? Number(customDurationText)
@@ -331,12 +351,30 @@ export default function CreateModeScreen() {
       setError('Tell people what activity you have in mind.');
       return;
     }
-    if (venueId === 'other' && (!customVenueName.trim() || !customVenueArea.trim())) {
+    if (
+      locationType === 'custom_public' &&
+      (!customVenueName.trim() || !customVenueArea.trim())
+    ) {
       setError('Enter the public place name and its general area.');
       return;
     }
-    if (venueId !== 'other' && !selectedVenue) {
+    if (locationType === 'catalog' && !selectedVenue) {
       setError('Choose a public venue.');
+      return;
+    }
+    if (
+      locationType === 'private' &&
+      (!privatePlaceName.trim() || !privateAddress.trim() || !customVenueArea.trim())
+    ) {
+      setError('Enter a private spot name, exact address, and broad area.');
+      return;
+    }
+    if (locationType === 'private' && !privateLocationConfirmed) {
+      setError('Confirm that you understand how the private location will be shared.');
+      return;
+    }
+    if (locationType === 'later' && !customVenueArea.trim()) {
+      setError('Enter the broad area where you expect to meet.');
       return;
     }
     if (!title.trim()) {
@@ -372,17 +410,29 @@ export default function CreateModeScreen() {
       approvalRequired,
       capacity,
       customActivityName: activitySlug === 'other' ? customActivityName : '',
-      customVenueArea: venueId === 'other' ? customVenueArea : '',
-      customVenueName: venueId === 'other' ? customVenueName : '',
+      customVenueArea: locationType === 'catalog' ? '' : customVenueArea,
+      customVenueName: locationType === 'custom_public' ? customVenueName : '',
       description: note,
       durationMinutes: effectiveDuration,
+      hostFirstName: profile?.firstName ?? 'Catch member',
       hostId: session.user.id,
       intensity,
       kind: catchKind,
+      locationType,
       minimumAge,
+      privateLocation:
+        locationType === 'private'
+          ? {
+              arrivalNotes: privateArrivalNotes.trim() || null,
+              exactAddress: privateAddress,
+              latitude: null,
+              longitude: null,
+              placeName: privatePlaceName,
+            }
+          : null,
       startsAt: startsAt.toISOString(),
       title,
-      venue: venueId === 'other' ? null : selectedVenue,
+      venue: locationType === 'catalog' ? selectedVenue : null,
     };
     const result = editingId
       ? await updateCatch(editingId, input)
@@ -586,16 +636,19 @@ export default function CreateModeScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.label}>Public venue</Text>
+      <Text style={styles.label}>Where</Text>
       <View style={styles.venueList}>
         {venues.map((venue) => {
-          const selected = venue.id === venueId;
+          const selected = locationType === 'catalog' && venue.id === venueId;
           return (
             <Pressable
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               key={venue.id}
-              onPress={() => setVenueId(venue.id)}
+              onPress={() => {
+                setLocationType('catalog');
+                setVenueId(venue.id);
+              }}
               style={[styles.venue, selected && styles.venueSelected]}>
               <View style={[styles.radio, selected && styles.radioSelected]}>
                 {selected ? <View style={styles.radioDot} /> : null}
@@ -612,19 +665,51 @@ export default function CreateModeScreen() {
         })}
         <Pressable
           accessibilityRole="radio"
-          accessibilityState={{ checked: venueId === 'other' }}
-          onPress={() => setVenueId('other')}
-          style={[styles.venue, venueId === 'other' && styles.venueSelected]}>
-          <View style={[styles.radio, venueId === 'other' && styles.radioSelected]}>
-            {venueId === 'other' ? <View style={styles.radioDot} /> : null}
+          accessibilityState={{ checked: locationType === 'custom_public' }}
+          onPress={() => setLocationType('custom_public')}
+          style={[styles.venue, locationType === 'custom_public' && styles.venueSelected]}>
+          <View style={[styles.radio, locationType === 'custom_public' && styles.radioSelected]}>
+            {locationType === 'custom_public' ? <View style={styles.radioDot} /> : null}
           </View>
           <View style={styles.venueText}>
             <Text style={styles.venueName}>Other public place</Text>
             <Text style={styles.venueArea}>Enter a park, court, field, or other public venue</Text>
           </View>
         </Pressable>
+        <Pressable
+          accessibilityRole="radio"
+          accessibilityState={{ checked: locationType === 'private' }}
+          onPress={() => {
+            setLocationType('private');
+            setApprovalRequired(true);
+          }}
+          style={[styles.venue, locationType === 'private' && styles.venueSelected]}>
+          <View style={[styles.radio, locationType === 'private' && styles.radioSelected]}>
+            {locationType === 'private' ? <View style={styles.radioDot} /> : null}
+          </View>
+          <View style={styles.venueText}>
+            <Text style={styles.venueName}>Private spot</Text>
+            <Text style={styles.venueArea}>
+              A driveway, yard, home hoop, or another host-approved meeting spot
+            </Text>
+          </View>
+          <Ionicons color={colors.forest} name="lock-closed-outline" size={18} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="radio"
+          accessibilityState={{ checked: locationType === 'later' }}
+          onPress={() => setLocationType('later')}
+          style={[styles.venue, locationType === 'later' && styles.venueSelected]}>
+          <View style={[styles.radio, locationType === 'later' && styles.radioSelected]}>
+            {locationType === 'later' ? <View style={styles.radioDot} /> : null}
+          </View>
+          <View style={styles.venueText}>
+            <Text style={styles.venueName}>Decide with the crew later</Text>
+            <Text style={styles.venueArea}>Show only a broad area until everyone coordinates</Text>
+          </View>
+        </Pressable>
       </View>
-      {venueId === 'other' ? (
+      {locationType === 'custom_public' ? (
         <View style={styles.revealFields}>
           <Text style={styles.revealLabel}>Public place name</Text>
           <TextInput
@@ -654,9 +739,104 @@ export default function CreateModeScreen() {
           </View>
         </View>
       ) : null}
-      <Text style={styles.helper}>
-        Private-address coordination will use a protected approval flow later.
-      </Text>
+      {locationType === 'private' ? (
+        <View style={styles.revealFields}>
+          <View style={styles.privateHeading}>
+            <Ionicons color={colors.forest} name="shield-checkmark" size={20} />
+            <View style={styles.venueText}>
+              <Text style={styles.revealLabel}>Protected private location</Text>
+              <Text style={styles.helperNoMargin}>
+                Discover shows only the broad area. The exact details unlock after you approve
+                someone.
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.revealLabel}>Spot name</Text>
+          <TextInput
+            accessibilityLabel="Private spot name"
+            maxLength={100}
+            onChangeText={setPrivatePlaceName}
+            placeholder="e.g. Blake's driveway hoop"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={privatePlaceName}
+          />
+          <Text style={styles.revealLabel}>Exact address or meeting instructions</Text>
+          <TextInput
+            accessibilityLabel="Private spot exact address"
+            maxLength={300}
+            onChangeText={setPrivateAddress}
+            placeholder="Street address or precise meeting point"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={privateAddress}
+          />
+          <Text style={styles.revealLabel}>Broad area shown publicly</Text>
+          <TextInput
+            accessibilityLabel="Private spot broad public area"
+            maxLength={100}
+            onChangeText={setCustomVenueArea}
+            placeholder="e.g. North Stafford"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customVenueArea}
+          />
+          <Text style={styles.revealLabel}>Arrival notes (optional)</Text>
+          <TextInput
+            accessibilityLabel="Private spot arrival notes"
+            maxLength={500}
+            multiline
+            onChangeText={setPrivateArrivalNotes}
+            placeholder="e.g. Use the side gate; hoop is behind the blue car"
+            placeholderTextColor={colors.muted}
+            style={[styles.input, styles.privateNotes]}
+            value={privateArrivalNotes}
+          />
+          <View style={styles.locationWarning}>
+            <Ionicons color={colors.orangeDark} name="warning-outline" size={18} />
+            <Text style={styles.locationWarningText}>
+              If play may extend into a road, confirm it is legal, low-traffic, and safe. Never
+              invite someone onto property you do not control.
+            </Text>
+          </View>
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: privateLocationConfirmed }}
+            onPress={() => setPrivateLocationConfirmed((value) => !value)}
+            style={styles.privateConfirm}>
+            <View style={[styles.checkbox, privateLocationConfirmed && styles.checkboxSelected]}>
+              {privateLocationConfirmed ? (
+                <Ionicons color={colors.white} name="checkmark" size={16} />
+              ) : null}
+            </View>
+            <Text style={styles.privateConfirmText}>
+              I understand the exact location is shared only with people I approve.
+            </Text>
+          </Pressable>
+          <Text style={styles.helperNoMargin}>
+            Secure coordinates are supported by the database; a visual drop-pin picker will be
+            added when the production map provider is connected.
+          </Text>
+        </View>
+      ) : null}
+      {locationType === 'later' ? (
+        <View style={styles.revealFields}>
+          <Text style={styles.revealLabel}>Broad meeting area</Text>
+          <TextInput
+            accessibilityLabel="Broad meeting area"
+            maxLength={100}
+            onChangeText={setCustomVenueArea}
+            placeholder="e.g. North Stafford"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={customVenueArea}
+          />
+          <Text style={styles.helperNoMargin}>
+            No exact address is stored. You can coordinate a public or protected private spot
+            after the crew forms.
+          </Text>
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Crew size</Text>
       <View style={styles.counterRow}>
@@ -747,9 +927,13 @@ export default function CreateModeScreen() {
             {capacity} people
           </Text>
           <Text style={styles.previewBody}>
-            {venueId === 'other'
+            {locationType === 'custom_public'
               ? customVenueName.trim() || 'Enter a public place'
-              : selectedVenue?.name ?? 'Choose a venue'}{' '}
+              : locationType === 'private'
+                ? `Private spot near ${customVenueArea.trim() || 'your broad area'}`
+                : locationType === 'later'
+                  ? `Location near ${customVenueArea.trim() || 'your broad area'} decided later`
+                  : selectedVenue?.name ?? 'Choose a venue'}{' '}
             · {minimumAge}+
           </Text>
         </View>
@@ -841,6 +1025,11 @@ const styles = StyleSheet.create({
     padding: 13,
   },
   revealLabel: { color: colors.ink, fontSize: 12, fontWeight: '800' },
+  privateHeading: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  privateNotes: { minHeight: 80, paddingTop: 14, textAlignVertical: 'top' },
+  privateConfirm: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  privateConfirmText: { flex: 1, color: colors.ink, fontSize: 11, lineHeight: 16 },
+  helperNoMargin: { color: colors.muted, fontSize: 10, lineHeight: 15 },
   customFieldRow: { flexDirection: 'row', gap: 10 },
   customField: { flex: 1, gap: 6 },
   smallLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' },
