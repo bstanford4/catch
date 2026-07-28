@@ -110,6 +110,9 @@ Coordination:
 - `join_requests`.
 - `open_to_catch_listings` plus listing activities.
 - `catch_proposals` and `proposal_revisions`.
+- `catch_mates` and `catch_mate_invites` — one-way saved connections and
+  single-use private friend codes; profile joins are exposed only through
+  authorization-checked functions.
 - `catch_messages` and `catch_status_history`.
 - `invite_links`.
 
@@ -211,4 +214,3 @@ tested without rendering navigation.
 - `MapService` for markers, search bounds, and directions.
 - `NotificationService` for token registration and deep links.
 - `AnalyticsSink` with a no-op default and typed event names.
-

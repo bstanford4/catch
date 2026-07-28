@@ -14,7 +14,7 @@ import { useAuth } from '@/providers/auth-provider';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const firstName = profile?.firstName ?? 'Blake';
   const initials =
     firstName
@@ -116,16 +116,36 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <SectionHeader
-          action="View people"
-          onAction={() => router.push('/(tabs)/discover')}
-          title="Open to Catch"
+          action={session ? 'View mates' : 'View people'}
+          onAction={() => router.push(session ? '/catch-mates' : '/(tabs)/discover')}
+          title={session ? 'Catch Mates' : 'Open to Catch'}
         />
-        <Text style={styles.sectionSubtitle}>Nearby people who are up for something.</Text>
-        <View style={styles.cardList}>
-          {catchMates.map((mate) => (
-            <CatchMateRow key={mate.id} mate={mate} />
-          ))}
-        </View>
+        <Text style={styles.sectionSubtitle}>
+          {session
+            ? 'Save good people and make the next plan in a few taps.'
+            : 'Nearby people who are up for something.'}
+        </Text>
+        {session ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/catch-mates')}
+            style={({ pressed }) => [styles.matesCta, pressed && styles.pressed]}>
+            <View style={styles.matesIcon}>
+              <Ionicons color={colors.forest} name="people" size={23} />
+            </View>
+            <View style={styles.matesText}>
+              <Text style={styles.matesTitle}>Open your Catch Mates</Text>
+              <Text style={styles.sectionSubtitle}>Friend codes, saved mates, and proposals</Text>
+            </View>
+            <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+          </Pressable>
+        ) : (
+          <View style={styles.cardList}>
+            {catchMates.map((mate) => (
+              <CatchMateRow key={mate.id} mate={mate} />
+            ))}
+          </View>
+        )}
       </View>
     </Screen>
   );
@@ -289,6 +309,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 10,
   },
+  matesCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    padding: 14,
+  },
+  matesIcon: {
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+    backgroundColor: colors.paleGreen,
+  },
+  matesText: { flex: 1, gap: 2 },
+  matesTitle: { color: colors.ink, fontSize: 15, fontWeight: '900' },
   cardList: {
     gap: 13,
   },

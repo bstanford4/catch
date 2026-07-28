@@ -7,6 +7,7 @@ import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
+import { saveCatchMate } from '@/services/catch-mate-service';
 import {
   type HostedCatch,
   type JoinRequest,
@@ -22,6 +23,7 @@ export default function CatchRequestsScreen() {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [decidingId, setDecidingId] = useState('');
+  const [savedMateIds, setSavedMateIds] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -55,6 +57,18 @@ export default function CatchRequestsScreen() {
     setRequests((current) =>
       current.map((item) => (item.id === request.id ? { ...item, status: result.data! } : item)),
     );
+  }
+
+  async function saveMate(request: JoinRequest) {
+    setDecidingId(request.id);
+    setError('');
+    const result = await saveCatchMate(request.requesterId);
+    setDecidingId('');
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setSavedMateIds((current) => [...current, request.requesterId]);
   }
 
   const pending = requests.filter((request) => request.status === 'requested');
@@ -107,7 +121,19 @@ export default function CatchRequestsScreen() {
       {decided.length ? (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Already decided</Text>
-          {decided.map((request) => <RequestCard key={request.id} request={request} />)}
+          {decided.map((request) => (
+            <RequestCard
+              busy={decidingId === request.id}
+              key={request.id}
+              onSave={
+                request.status === 'approved' && !savedMateIds.includes(request.requesterId)
+                  ? () => saveMate(request)
+                  : undefined
+              }
+              request={request}
+              saved={savedMateIds.includes(request.requesterId)}
+            />
+          ))}
         </View>
       ) : null}
     </Screen>
@@ -118,12 +144,16 @@ function RequestCard({
   busy = false,
   onApprove,
   onDecline,
+  onSave,
   request,
+  saved = false,
 }: {
   busy?: boolean;
   onApprove?: () => void;
   onDecline?: () => void;
+  onSave?: () => void;
   request: JoinRequest;
+  saved?: boolean;
 }) {
   const initials = request.requesterFirstName.slice(0, 2).toUpperCase();
   return (
@@ -151,6 +181,21 @@ function RequestCard({
               <Text style={styles.approveText}>{busy ? 'Saving...' : 'Approve'}</Text>
             </Pressable>
           </View>
+        ) : null}
+        {onSave || saved ? (
+          <Pressable
+            disabled={busy || saved}
+            onPress={onSave}
+            style={({ pressed }) => [styles.saveMate, pressed && styles.pressed]}>
+            <Ionicons
+              color={colors.forest}
+              name={saved ? 'checkmark-circle' : 'person-add-outline'}
+              size={16}
+            />
+            <Text style={styles.saveMateText}>
+              {saved ? 'Saved as Catch Mate' : busy ? 'Saving...' : 'Save as Catch Mate'}
+            </Text>
+          </Pressable>
         ) : null}
       </View>
     </View>
@@ -213,6 +258,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.forest,
   },
   approveText: { color: colors.white, fontSize: 12, fontWeight: '800' },
+  saveMate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 39,
+    borderRadius: 12,
+    backgroundColor: colors.paleGreen,
+  },
+  saveMateText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
   error: { marginTop: spacing.md, color: colors.error, fontSize: 13, textAlign: 'center' },
   pressed: { opacity: 0.76 },
 });

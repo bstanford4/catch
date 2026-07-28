@@ -22,23 +22,12 @@ import {
   updateCatch,
 } from '@/services/catch-service';
 
-const copy = {
-  now: {
-    eyebrow: 'CATCH NOW',
-    title: 'What are you up for?',
-    subtitle: 'Tell nearby people what sounds good in the next few hours.',
-    submit: 'Post Catch Now',
-  },
-  scheduled: {
-    eyebrow: 'POST A CATCH',
-    title: 'Put a good plan on the board.',
-    subtitle: 'Pick the basics now. Fine-tune the details with your catch crew.',
-    submit: 'Post this Catch',
-  },
-} as const;
-
 const durations = [30, 45, 60, 90];
-const nowOffsets = [30, 60, 90, 120];
+const quickStarts = [
+  { label: 'As soon as possible', offset: 30 },
+  { label: 'In 1 hour', offset: 60 },
+  { label: 'In 2 hours', offset: 120 },
+];
 const scheduledHours = [
   { hour: 9, label: '9 AM' },
   { hour: 12, label: 'Noon' },
@@ -126,7 +115,7 @@ export default function CreateModeScreen() {
   const params = useLocalSearchParams<{ activity?: string; catchId?: string; mode?: string }>();
   const router = useRouter();
   const { profile, session } = useAuth();
-  const mode = params.mode === 'now' ? 'now' : params.mode === 'open' ? 'open' : 'scheduled';
+  const isOpenToCatch = params.mode === 'open';
   const editingId = params.catchId;
   const initialActivity =
     demoActivities.find((activity) => activity.id === params.activity) ?? demoActivities[0];
@@ -149,7 +138,9 @@ export default function CreateModeScreen() {
   const [nowOffsetMinutes, setNowOffsetMinutes] = useState(60);
   const [scheduledDay, setScheduledDay] = useState(1);
   const [scheduledHour, setScheduledHour] = useState(18);
-  const [customWhen, setCustomWhen] = useState(false);
+  const [timingMode, setTimingMode] = useState<'soon' | 'scheduled' | 'custom'>(
+    params.mode === 'now' ? 'soon' : 'scheduled',
+  );
   const [baseNow] = useState(() => new Date());
   const initialCustomStart = new Date(baseNow.getTime() + 60 * 60_000);
   const [customDate, setCustomDate] = useState(dateInputValue(initialCustomStart));
@@ -248,18 +239,18 @@ export default function CreateModeScreen() {
         setCustomDate(dateInputValue(start));
         setCustomTime(timeInputValue(start));
         if (item.kind === 'now') {
-          setCustomWhen(true);
+          setTimingMode('custom');
         } else {
           const day = dayOptions.find((option) => dateKey(option.date) === dateKey(start));
           const exactHour = scheduledHours.find(
             (option) => option.hour === start.getHours() && start.getMinutes() === 0,
           );
           if (day && exactHour) {
-            setCustomWhen(false);
+            setTimingMode('scheduled');
             setScheduledDay(day.offset);
             setScheduledHour(exactHour.hour);
           } else {
-            setCustomWhen(true);
+            setTimingMode('custom');
           }
         }
       }
@@ -297,8 +288,8 @@ export default function CreateModeScreen() {
         ? Number.NaN
         : durationMinutes;
   const startsAt = useMemo(() => {
-    if (customWhen) return parseLocalDateTime(customDate, customTime);
-    if (mode === 'now') {
+    if (timingMode === 'custom') return parseLocalDateTime(customDate, customTime);
+    if (timingMode === 'soon') {
       const date = new Date(baseNow.getTime() + nowOffsetMinutes * 60_000);
       date.setSeconds(0, 0);
       return date;
@@ -310,15 +301,14 @@ export default function CreateModeScreen() {
     baseNow,
     customDate,
     customTime,
-    customWhen,
     dayOptions,
-    mode,
     nowOffsetMinutes,
     scheduledDay,
     scheduledHour,
+    timingMode,
   ]);
 
-  if (mode === 'open') {
+  if (isOpenToCatch) {
     return (
       <Screen>
         <Text style={styles.eyebrow}>OPEN TO CATCH</Text>
@@ -339,8 +329,10 @@ export default function CreateModeScreen() {
     );
   }
 
-  const catchKind: 'now' | 'scheduled' = mode === 'now' ? 'now' : 'scheduled';
-  const labels = copy[catchKind];
+  const catchKind: 'now' | 'scheduled' =
+    startsAt && startsAt.getTime() - baseNow.getTime() <= 3 * 60 * 60_000
+      ? 'now'
+      : 'scheduled';
 
   async function submit() {
     if (!selectedActivity) {
@@ -458,9 +450,11 @@ export default function CreateModeScreen() {
 
   return (
     <Screen>
-      <Text style={styles.eyebrow}>{editingId ? 'EDIT YOUR CATCH' : labels.eyebrow}</Text>
-      <Text style={styles.title}>{editingId ? 'Tune up the plan.' : labels.title}</Text>
-      <Text style={styles.subtitle}>{labels.subtitle}</Text>
+      <Text style={styles.eyebrow}>{editingId ? 'EDIT YOUR CATCH' : 'CREATE A CATCH'}</Text>
+      <Text style={styles.title}>{editingId ? 'Tune up the plan.' : 'What sounds good?'}</Text>
+      <Text style={styles.subtitle}>
+        Pick a rough time or plan ahead. It all becomes one clear Catch.
+      </Text>
 
       <Text style={styles.label}>Activity</Text>
       <View style={styles.activityGrid}>
@@ -508,26 +502,30 @@ export default function CreateModeScreen() {
       />
 
       <Text style={styles.label}>When</Text>
-      {mode === 'now' ? (
-        <View style={styles.chips}>
-          {nowOffsets.map((offset) => (
-            <Chip
-              key={offset}
-              label={`In ${offset < 60 ? `${offset} min` : `${offset / 60} hr${offset > 60 ? 's' : ''}`}`}
-              onPress={() => {
-                setCustomWhen(false);
-                setNowOffsetMinutes(offset);
-              }}
-              selected={!customWhen && nowOffsetMinutes === offset}
-            />
-          ))}
+      <View style={styles.chips}>
+        {quickStarts.map((option) => (
           <Chip
-            label="Other time"
-            onPress={() => setCustomWhen(true)}
-            selected={customWhen}
+            key={option.offset}
+            label={option.label}
+            onPress={() => {
+              setTimingMode('soon');
+              setNowOffsetMinutes(option.offset);
+            }}
+            selected={timingMode === 'soon' && nowOffsetMinutes === option.offset}
           />
-        </View>
-      ) : (
+        ))}
+        <Chip
+          label="Choose day & time"
+          onPress={() => setTimingMode('scheduled')}
+          selected={timingMode === 'scheduled'}
+        />
+        <Chip
+          label="Enter exact date/time"
+          onPress={() => setTimingMode('custom')}
+          selected={timingMode === 'custom'}
+        />
+      </View>
+      {timingMode === 'scheduled' ? (
         <>
           <ScrollView
             contentContainerStyle={styles.horizontalChoices}
@@ -538,10 +536,10 @@ export default function CreateModeScreen() {
                 key={option.offset}
                 label={option.label}
                 onPress={() => {
-                  setCustomWhen(false);
+                  setTimingMode('scheduled');
                   setScheduledDay(option.offset);
                 }}
-                selected={!customWhen && scheduledDay === option.offset}
+                selected={scheduledDay === option.offset}
               />
             ))}
           </ScrollView>
@@ -551,21 +549,16 @@ export default function CreateModeScreen() {
                 key={option.hour}
                 label={option.label}
                 onPress={() => {
-                  setCustomWhen(false);
+                  setTimingMode('scheduled');
                   setScheduledHour(option.hour);
                 }}
-                selected={!customWhen && scheduledHour === option.hour}
+                selected={scheduledHour === option.hour}
               />
             ))}
-            <Chip
-              label="Other date/time"
-              onPress={() => setCustomWhen(true)}
-              selected={customWhen}
-            />
           </View>
         </>
-      )}
-      {customWhen ? (
+      ) : null}
+      {timingMode === 'custom' ? (
         <View style={styles.revealFields}>
           <Text style={styles.revealLabel}>Custom start</Text>
           <View style={styles.customFieldRow}>
@@ -950,7 +943,7 @@ export default function CreateModeScreen() {
               ? 'Saving…'
               : editingId
                 ? 'Save changes'
-                : labels.submit
+                : 'Create this Catch'
         }
         onPress={submit}
       />

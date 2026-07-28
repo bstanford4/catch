@@ -30,6 +30,9 @@ export default function RootLayout() {
           <Stack.Screen name="create/[mode]" options={{ title: 'Create a Catch' }} />
           <Stack.Screen name="catch/[id]" options={{ title: 'Catch details' }} />
           <Stack.Screen name="catch-requests/[id]" options={{ title: 'Join requests' }} />
+          <Stack.Screen name="catch-mates" options={{ title: 'Catch Mates' }} />
+          <Stack.Screen name="proposals" options={{ title: 'Catch proposals' }} />
+          <Stack.Screen name="propose/[mateId]" options={{ title: 'Propose a Catch' }} />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>

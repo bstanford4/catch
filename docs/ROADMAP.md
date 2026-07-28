@@ -43,6 +43,8 @@ private-location access audit events, and dedicated access-policy tests.
 Catch Now and scheduled Catch forms now persist activity, start time, duration,
 public venue, capacity, approval preference, intensity, age gate, and
 description. Hosts can review, edit, and cancel their plans from My Catches.
+Both timelines now use one Create a Catch flow, with Catch Now retained as an
+urgent preset rather than a separate workflow.
 Hosts can also enter a custom activity, exact date/time, duration, or unlisted
 public place/general area. Remaining work is Open to Catch publishing,
 activity-specific metadata beyond the custom label, shared venue submission and
@@ -51,9 +53,11 @@ geocoding, and cancellation audit events.
 ### Phase 5 — discovery and proposals
 
 Live list discovery, join requests, transactional host approval, and protected
-location release are implemented. Remaining work is compatibility scoring, map
-mode, proposals and immutable revisions, invitations, and low-density
-notifications.
+location release are implemented. Saved Catch Mates, private friend codes, and
+direct proposals with immutable first revisions are also implemented; accepting
+a proposal creates an unlisted two-person Catch. Remaining work is compatibility
+scoring, map mode, counter-proposal revisions, external invitations, and
+low-density notifications.
 
 ### Phase 6 — messages and notifications
 

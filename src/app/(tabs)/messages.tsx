@@ -1,12 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Screen } from '@/components/ui/screen';
+import { StatePanel } from '@/components/ui/state-panel';
 import { messageThreads } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
+import { useAuth } from '@/providers/auth-provider';
 
 export default function MessagesScreen() {
+  const router = useRouter();
+  const { session } = useAuth();
   return (
     <Screen>
       <View style={styles.header}>
@@ -25,7 +30,16 @@ export default function MessagesScreen() {
       </View>
 
       <View style={styles.list}>
-        {messageThreads.map((thread) => (
+        {session ? (
+          <StatePanel
+            action="View Catch proposals"
+            body="Direct proposals are live now. Chat threads will unlock in the next messaging slice after a proposal or Catch exists."
+            icon="paper-plane-outline"
+            onAction={() => router.push('/proposals')}
+            title="Start with a proposal"
+          />
+        ) : null}
+        {!session ? messageThreads.map((thread) => (
           <Pressable
             accessibilityLabel={`${thread.name}. ${thread.preview}`}
             key={thread.id}
@@ -53,7 +67,7 @@ export default function MessagesScreen() {
               </View>
             ) : null}
           </Pressable>
-        ))}
+        )) : null}
       </View>
     </Screen>
   );
@@ -160,4 +174,3 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
 });
-

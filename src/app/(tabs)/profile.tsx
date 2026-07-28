@@ -90,6 +90,12 @@ export default function ProfileScreen() {
           detail: availabilityDetail,
           onPress: () => router.push('/availability'),
         },
+        {
+          icon: 'people-outline',
+          label: 'Catch Mates',
+          detail: 'Saved people and direct proposals',
+          onPress: () => router.push('/catch-mates'),
+        },
         { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
         { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
       ]

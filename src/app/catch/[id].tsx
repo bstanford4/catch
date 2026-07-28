@@ -13,6 +13,7 @@ import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, spacing } from '@/constants/theme';
 import { getActivity, getCatch } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
+import { saveCatchMate } from '@/services/catch-mate-service';
 import {
   type HostedCatch,
   type JoinRequest,
@@ -37,6 +38,7 @@ function LiveCatchDetails({ id }: { id: string }) {
   const [request, setRequest] = useState<JoinRequest | null>(null);
   const [privateLocation, setPrivateLocation] = useState<PrivateCatchLocation | null>(null);
   const [message, setMessage] = useState('');
+  const [mateSaved, setMateSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -109,6 +111,19 @@ function LiveCatchDetails({ id }: { id: string }) {
       return;
     }
     setRequest({ ...request, status: 'withdrawn' });
+  }
+
+  async function saveHost() {
+    setIsSaving(true);
+    setError('');
+    const result = await saveCatchMate(item?.hostId ?? '');
+    setIsSaving(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setMateSaved(true);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
   if (isLoading) {
@@ -253,7 +268,16 @@ function LiveCatchDetails({ id }: { id: string }) {
         </View>
       ) : null}
       {!isHost && approved ? (
-        <Text style={styles.approved}>You are approved for this Catch.</Text>
+        <View style={styles.requestBox}>
+          <Text style={styles.approved}>You are approved for this Catch.</Text>
+          <Button
+            disabled={isSaving || mateSaved}
+            icon={mateSaved ? 'checkmark-circle' : 'person-add-outline'}
+            label={mateSaved ? `${item.hostFirstName} is a Catch Mate` : `Save ${item.hostFirstName} as a Catch Mate`}
+            onPress={saveHost}
+            variant="secondary"
+          />
+        </View>
       ) : null}
       {isHost ? (
         <Text style={styles.approved}>You are hosting this Catch. Manage requests from My Catches.</Text>

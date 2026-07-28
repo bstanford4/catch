@@ -7,7 +7,7 @@ import { Screen } from '@/components/ui/screen';
 import { activities } from '@/data/demo';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 
-type CreateMode = 'now' | 'scheduled' | 'open';
+type CreateMode = 'new' | 'open';
 
 const options: {
   mode: CreateMode;
@@ -18,20 +18,12 @@ const options: {
   color: string;
 }[] = [
   {
-    mode: 'now',
-    icon: 'flash',
-    title: 'Catch Now',
-    badge: 'TODAY',
-    description: 'I want to play in the next few hours.',
-    color: colors.paleOrange,
-  },
-  {
-    mode: 'scheduled',
+    mode: 'new',
     icon: 'calendar',
-    title: 'Post a Catch',
-    badge: 'PLAN IT',
-    description: 'Set a date, place, and number of people.',
-    color: colors.paleGreen,
+    title: 'Create a Catch',
+    badge: 'NOW OR LATER',
+    description: 'Choose what, when, where, and who you want to join.',
+    color: colors.paleOrange,
   },
   {
     mode: 'open',
@@ -72,7 +64,7 @@ export default function CreateScreen() {
             style={({ pressed }) => [styles.option, pressed && styles.pressed]}>
             <View style={[styles.optionIcon, { backgroundColor: option.color }]}>
               <Ionicons
-                color={option.mode === 'now' ? colors.orangeDark : colors.forest}
+                color={option.mode === 'new' ? colors.orangeDark : colors.forest}
                 name={option.icon}
                 size={26}
               />
@@ -98,7 +90,7 @@ export default function CreateScreen() {
             onPress={() =>
               router.push({
                 pathname: '/create/[mode]',
-                params: { mode: 'scheduled', activity: activity.id },
+                params: { mode: 'new', activity: activity.id },
               })
             }
             style={({ pressed }) => [styles.activity, pressed && styles.pressed]}>

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,6 +23,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { type HostedCatch, listDiscoverableCatches } from '@/services/catch-service';
 
 export default function DiscoverScreen() {
+  const router = useRouter();
   const { session } = useAuth();
   const [selected, setSelected] = useState('All');
   const [mode, setMode] = useState<'Catches' | 'People'>('Catches');
@@ -119,7 +120,9 @@ export default function DiscoverScreen() {
         <Text style={styles.resultCount}>
           {mode === 'Catches'
             ? `${session ? filtered.length : catches.length} catches nearby`
-            : `${catchMates.length} people open`}
+            : session
+              ? 'Private connections only'
+              : `${catchMates.length} people open`}
         </Text>
         <Pressable accessibilityRole="button" style={styles.mapButton}>
           <Ionicons color={colors.forest} name="map-outline" size={16} />
@@ -148,7 +151,16 @@ export default function DiscoverScreen() {
         {mode === 'Catches' && !session
           ? catches.map((item) => <ActivityCard item={item} key={item.id} />)
           : null}
-        {mode === 'People'
+        {mode === 'People' && session ? (
+          <StatePanel
+            action="Open Catch Mates"
+            body="Catch avoids a searchable people directory. Connect after a shared Catch or use a private friend code."
+            icon="people-outline"
+            onAction={() => router.push('/catch-mates')}
+            title="People stay private"
+          />
+        ) : null}
+        {mode === 'People' && !session
           ? catchMates.map((mate) => <CatchMateRow key={mate.id} mate={mate} />)
           : null}
       </View>

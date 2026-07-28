@@ -14,11 +14,14 @@ The local Expo demo does not require Supabase. To enable the backend:
 6. Run `migrations/202607260004_private_locations_and_join_requests.sql` once.
    It adds discovery policies, encrypted private-location functions, join
    requests, and transactional host approval.
-7. Run `seed.sql` for catalog and public-venue demo records.
-8. Copy `.env.example` to `.env` and add the project URL and client-safe
+7. Run `migrations/202607260005_catch_mates_and_direct_proposals.sql` once.
+   It adds saved Catch Mates, single-use friend codes, and direct proposals that
+   become real unlisted Catches when accepted.
+8. Run `seed.sql` for catalog and public-venue demo records.
+9. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-9. Add `catch://**` to the project's Auth redirect URLs.
-10. Restart Expo so client environment variables are rebundled.
+10. Add `catch://**` to the project's Auth redirect URLs.
+11. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

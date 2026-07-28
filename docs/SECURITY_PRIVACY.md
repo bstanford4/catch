@@ -28,6 +28,11 @@ security-definer database function checks that the caller is the host or an
 approved participant before decrypting the payload; discovery and pending join
 requests receive only the Catch's broad area label.
 
+Catch Mates deliberately does not expose a searchable user or email directory.
+Members can save someone after sharing an approved Catch, or exchange a
+single-use, expiring friend code out of band. Direct proposals require an
+existing saved relationship and respect blocks in both directions.
+
 PostGIS provides accurate radius queries and spatial indexes. The tradeoff is
 additional local setup and careful safe-view design; it is justified because
 distance discovery is core. Coarse search points should be deliberately rounded
