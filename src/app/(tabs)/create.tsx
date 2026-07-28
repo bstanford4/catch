@@ -72,7 +72,9 @@ export default function CreateScreen() {
             <View style={styles.optionContent}>
               <View style={styles.optionHeading}>
                 <Text style={styles.optionTitle}>{option.title}</Text>
-                <Text style={styles.badge}>{option.badge}</Text>
+                <View style={styles.badge}>
+                  <Text numberOfLines={1} style={styles.badgeText}>{option.badge}</Text>
+                </View>
               </View>
               <Text style={styles.optionDescription}>{option.description}</Text>
             </View>
@@ -185,19 +187,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   optionTitle: {
+    flexShrink: 1,
     color: colors.ink,
     fontSize: 18,
     fontWeight: '800',
   },
   badge: {
+    alignSelf: 'center',
     borderRadius: radius.pill,
     backgroundColor: colors.cream,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+  },
+  badgeText: {
     color: colors.muted,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.6,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
   },
   optionDescription: {
     color: colors.muted,
