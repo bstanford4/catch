@@ -18,13 +18,16 @@ The local Expo demo does not require Supabase. To enable the backend:
    It adds saved Catch Mates, single-use friend codes, and direct proposals that
    become real unlisted Catches when accepted.
 8. Run `migrations/202607270006_open_to_catch_matching.sql` once. It adds
-   expiring Open to Catch publishing, privacy-safe compatible-person matching,
+   opt-in Open to Catch publishing, privacy-safe compatible-person matching,
    and in-app alerts for newly posted compatible Catches.
-9. Run `seed.sql` for catalog and public-venue demo records.
-10. Copy `.env.example` to `.env` and add the project URL and client-safe
+9. Run `migrations/202607270007_persistent_open_availability.sql` once. It makes
+   Open to Catch and day-specific recurring availability persistent until the
+   member edits, clears, or pauses them.
+10. Run `seed.sql` for catalog and public-venue demo records.
+11. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-11. Add `catch://**` to the project's Auth redirect URLs.
-12. Restart Expo so client environment variables are rebundled.
+12. Add `catch://**` to the project's Auth redirect URLs.
+13. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

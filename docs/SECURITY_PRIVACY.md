@@ -33,8 +33,9 @@ Members can save someone after sharing an approved Catch, or exchange a
 single-use, expiring friend code out of band. Direct proposals require an
 existing saved relationship and respect blocks in both directions.
 
-Open to Catch uses an active, expiring listing as the consent gate for visible
-people cards. Saved availability can privately generate a Catch alert without
+Open to Catch uses an explicit, persistent on/off setting as the consent gate for
+visible people cards. Members can pause it at any time without deleting their
+preferences. Saved availability can privately generate a Catch alert without
 making that person's routine visible. Matching uses broad weekday/time labels
 and a broad area; alerts never serialize private addresses.
 

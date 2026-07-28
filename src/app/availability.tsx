@@ -9,31 +9,31 @@ import { colors, radius, spacing } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 import {
   type AvailabilityPeriod,
+  type AvailabilitySelection,
   listAvailability,
   saveAvailability,
 } from '@/services/availability-service';
 
 const weekdays = [
-  { label: 'Sun', value: 0 },
-  { label: 'Mon', value: 1 },
-  { label: 'Tue', value: 2 },
-  { label: 'Wed', value: 3 },
-  { label: 'Thu', value: 4 },
-  { label: 'Fri', value: 5 },
-  { label: 'Sat', value: 6 },
+  { label: 'Sunday', shortLabel: 'Sun', value: 0 },
+  { label: 'Monday', shortLabel: 'Mon', value: 1 },
+  { label: 'Tuesday', shortLabel: 'Tue', value: 2 },
+  { label: 'Wednesday', shortLabel: 'Wed', value: 3 },
+  { label: 'Thursday', shortLabel: 'Thu', value: 4 },
+  { label: 'Friday', shortLabel: 'Fri', value: 5 },
+  { label: 'Saturday', shortLabel: 'Sat', value: 6 },
 ];
 
-const periods: { detail: string; label: string; value: AvailabilityPeriod }[] = [
-  { detail: 'Before noon', label: 'Morning', value: 'morning' },
-  { detail: 'Noon–5 PM', label: 'Afternoon', value: 'afternoon' },
-  { detail: 'After 5 PM', label: 'Evening', value: 'evening' },
+const periods: { label: string; value: AvailabilityPeriod }[] = [
+  { label: 'Morning', value: 'morning' },
+  { label: 'Afternoon', value: 'afternoon' },
+  { label: 'Evening', value: 'evening' },
 ];
 
 export default function AvailabilityScreen() {
   const router = useRouter();
   const { session } = useAuth();
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [selectedPeriods, setSelectedPeriods] = useState<AvailabilityPeriod[]>([]);
+  const [selections, setSelections] = useState<AvailabilitySelection[]>([]);
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -48,8 +48,12 @@ export default function AvailabilityScreen() {
       if (result.error) {
         setError(result.error);
       } else {
-        setSelectedDays([...new Set(result.data.map((window) => window.weekday))]);
-        setSelectedPeriods([...new Set(result.data.map((window) => window.broadPeriod))]);
+        setSelections(
+          result.data.map((window) => ({
+            broadPeriod: window.broadPeriod,
+            weekday: window.weekday,
+          })),
+        );
       }
       setIsLoading(false);
     });
@@ -58,19 +62,25 @@ export default function AvailabilityScreen() {
     };
   }, [session]);
 
-  function toggleDay(day: number) {
-    setMessage('');
-    setSelectedDays((current) =>
-      current.includes(day) ? current.filter((value) => value !== day) : [...current, day],
+  function isSelected(weekday: number, broadPeriod: AvailabilityPeriod) {
+    return selections.some(
+      (selection) =>
+        selection.weekday === weekday && selection.broadPeriod === broadPeriod,
     );
   }
 
-  function togglePeriod(period: AvailabilityPeriod) {
+  function toggleWindow(weekday: number, broadPeriod: AvailabilityPeriod) {
     setMessage('');
-    setSelectedPeriods((current) =>
-      current.includes(period)
-        ? current.filter((value) => value !== period)
-        : [...current, period],
+    setSelections((current) =>
+      current.some(
+        (selection) =>
+          selection.weekday === weekday && selection.broadPeriod === broadPeriod,
+      )
+        ? current.filter(
+            (selection) =>
+              selection.weekday !== weekday || selection.broadPeriod !== broadPeriod,
+          )
+        : [...current, { broadPeriod, weekday }],
     );
   }
 
@@ -82,16 +92,16 @@ export default function AvailabilityScreen() {
     setIsSaving(true);
     setError('');
     setMessage('');
-    const result = await saveAvailability(session.user.id, selectedDays, selectedPeriods);
+    const result = await saveAvailability(session.user.id, selections);
     setIsSaving(false);
     if (result.error) {
       setError(result.error);
       return;
     }
     setMessage(
-      selectedDays.length && selectedPeriods.length
-        ? 'Availability saved for the next 90 days.'
-        : 'Availability cleared.',
+      selections.length
+        ? 'Your weekly availability is saved.'
+        : 'Your availability has been cleared.',
     );
   }
 
@@ -101,85 +111,84 @@ export default function AvailabilityScreen() {
         <Text style={styles.eyebrow}>YOUR RHYTHM</Text>
         <Text style={styles.title}>When are you usually free?</Text>
         <Text style={styles.intro}>
-          Pick broad windows—not an exact schedule. We’ll use these to surface better matches.
+          Choose any combination for each day. Monday afternoon and Saturday morning?
+          That works.
         </Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Days</Text>
-        <View style={styles.dayGrid}>
-          {weekdays.map((day) => {
-            const selected = selectedDays.includes(day.value);
-            return (
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: selected }}
-                key={day.value}
-                onPress={() => toggleDay(day.value)}
-                style={({ pressed }) => [
-                  styles.day,
-                  selected && styles.selected,
-                  pressed && styles.pressed,
-                ]}>
-                <Text style={[styles.dayText, selected && styles.selectedText]}>{day.label}</Text>
-              </Pressable>
-            );
-          })}
+        <View style={styles.sectionHeading}>
+          <View>
+            <Text style={styles.sectionTitle}>Weekly availability</Text>
+            <Text style={styles.sectionHint}>Tap every broad window that usually works.</Text>
+          </View>
+          {selections.length ? (
+            <Pressable onPress={() => setSelections([])} style={styles.clearButton}>
+              <Text style={styles.clearText}>Clear</Text>
+            </Pressable>
+          ) : null}
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Time of day</Text>
-        <View style={styles.periodList}>
-          {periods.map((period) => {
-            const selected = selectedPeriods.includes(period.value);
-            return (
-              <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: selected }}
-                key={period.value}
-                onPress={() => togglePeriod(period.value)}
-                style={({ pressed }) => [
-                  styles.period,
-                  selected && styles.periodSelected,
-                  pressed && styles.pressed,
-                ]}>
-                <View style={[styles.check, selected && styles.checkSelected]}>
-                  {selected ? <Ionicons color={colors.white} name="checkmark" size={15} /> : null}
-                </View>
-                <View>
-                  <Text style={styles.periodLabel}>{period.label}</Text>
-                  <Text style={styles.periodDetail}>{period.detail}</Text>
-                </View>
-              </Pressable>
-            );
-          })}
+        <View style={styles.schedule}>
+          {weekdays.map((day) => (
+            <View key={day.value} style={styles.dayRow}>
+              <View style={styles.dayLabel}>
+                <Text style={styles.dayShort}>{day.shortLabel}</Text>
+              </View>
+              <View style={styles.periodChoices}>
+                {periods.map((period) => {
+                  const selected = isSelected(day.value, period.value);
+                  return (
+                    <Pressable
+                      accessibilityLabel={`${day.label} ${period.label}`}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: selected }}
+                      key={period.value}
+                      onPress={() => toggleWindow(day.value, period.value)}
+                      style={({ pressed }) => [
+                        styles.periodChip,
+                        selected && styles.periodSelected,
+                        pressed && styles.pressed,
+                      ]}>
+                      {selected ? (
+                        <Ionicons color={colors.white} name="checkmark" size={14} />
+                      ) : null}
+                      <Text style={[styles.periodText, selected && styles.periodTextSelected]}>
+                        {period.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
         </View>
       </View>
 
       <View style={styles.privacyNote}>
         <Ionicons color={colors.forest} name="shield-checkmark" size={20} />
         <Text style={styles.privacyText}>
-          Catch only shows broad labels like “Wednesday afternoons.” These preferences expire
-          after 90 days so they don’t become stale.
+          Catch shares only broad overlaps such as “Monday afternoons.” Your choices stay
+          saved until you change or clear them.
         </Text>
       </View>
 
-      {isLoading ? <Text style={styles.status}>Loading your availability…</Text> : null}
+      {isLoading ? <Text style={styles.status}>Loading your availability...</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {message ? <Text style={styles.success}>{message}</Text> : null}
       <Button
         disabled={isLoading || isSaving}
-        label={isSaving ? 'Saving…' : 'Save availability'}
+        label={isSaving ? 'Saving...' : 'Save availability'}
         onPress={save}
       />
-      {selectedDays.length && selectedPeriods.length ? (
+
+      {selections.length ? (
         <View style={styles.matchCard}>
           <Ionicons color={colors.forest} name="people-outline" size={21} />
           <View style={styles.matchText}>
             <Text style={styles.matchTitle}>Ready to see who lines up?</Text>
             <Text style={styles.matchBody}>
-              Turn on Open to Catch to see people with overlapping activities and broad windows.
+              Open to Catch uses these exact day-and-time combinations for matching.
             </Text>
           </View>
           <Pressable
@@ -190,9 +199,8 @@ export default function AvailabilityScreen() {
             <Ionicons color={colors.forest} name="arrow-forward-circle" size={28} />
           </Pressable>
         </View>
-      ) : null}
-      {(selectedDays.length === 0 || selectedPeriods.length === 0) && !isLoading ? (
-        <Text style={styles.clearHint}>Saving with an empty selection clears your availability.</Text>
+      ) : !isLoading ? (
+        <Text style={styles.clearHint}>Saving an empty schedule clears your availability.</Text>
       ) : null}
     </Screen>
   );
@@ -214,46 +222,53 @@ const styles = StyleSheet.create({
   },
   intro: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   section: { marginTop: spacing.xl, gap: 12 },
-  sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '900' },
-  dayGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
-  day: {
-    alignItems: 'center',
-    minWidth: 58,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.pill,
-    backgroundColor: colors.paper,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  selected: { borderColor: colors.forest, backgroundColor: colors.forest },
-  dayText: { color: colors.forest, fontSize: 13, fontWeight: '800' },
-  selectedText: { color: colors.white },
-  periodList: { gap: 10 },
-  period: {
+  sectionHeading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '900' },
+  sectionHint: { marginTop: 3, color: colors.muted, fontSize: 11 },
+  clearButton: {
+    borderRadius: radius.pill,
+    backgroundColor: colors.paleGreen,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  clearText: { color: colors.forest, fontSize: 11, fontWeight: '900' },
+  schedule: {
+    gap: 8,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     backgroundColor: colors.paper,
-    padding: 15,
+    padding: 10,
   },
-  periodSelected: { borderColor: colors.grass, backgroundColor: colors.paleGreen },
-  check: {
-    width: 25,
-    height: 25,
+  dayRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dayLabel: {
+    width: 42,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dayShort: { color: colors.ink, fontSize: 12, fontWeight: '900' },
+  periodChoices: { flex: 1, flexDirection: 'row', gap: 6 },
+  periodChip: {
+    flex: 1,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: 8,
+    borderRadius: radius.sm,
     backgroundColor: colors.white,
+    paddingHorizontal: 4,
   },
-  checkSelected: { borderColor: colors.forest, backgroundColor: colors.forest },
-  periodLabel: { color: colors.ink, fontSize: 14, fontWeight: '800' },
-  periodDetail: { marginTop: 2, color: colors.muted, fontSize: 11 },
+  periodSelected: { borderColor: colors.forest, backgroundColor: colors.forest },
+  periodText: { color: colors.forest, fontSize: 10, fontWeight: '800' },
+  periodTextSelected: { color: colors.white },
   privacyNote: {
     flexDirection: 'row',
     gap: 11,
@@ -265,7 +280,13 @@ const styles = StyleSheet.create({
   privacyText: { flex: 1, color: colors.forest, fontSize: 12, lineHeight: 18 },
   status: { marginBottom: 12, color: colors.muted, textAlign: 'center' },
   error: { marginBottom: 12, color: colors.error, fontSize: 13, textAlign: 'center' },
-  success: { marginBottom: 12, color: colors.forest, fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  success: {
+    marginBottom: 12,
+    color: colors.forest,
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   clearHint: { marginTop: 10, color: colors.muted, fontSize: 11, textAlign: 'center' },
   matchCard: {
     flexDirection: 'row',

@@ -63,11 +63,9 @@ export async function getMyOpenToCatch() {
   };
 }
 
-export async function publishOpenToCatch(hours = 48) {
+export async function publishOpenToCatch() {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
-  const { data, error } = await supabase.rpc('publish_open_to_catch', {
-    requested_hours: hours,
-  });
+  const { data, error } = await supabase.rpc('publish_open_to_catch');
   return { data: (data as string | null) ?? null, error: error?.message };
 }
 

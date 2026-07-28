@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
@@ -26,7 +25,6 @@ export function OpenToCatchExperience() {
   const [listing, setListing] = useState<OpenToCatchListing | null>(null);
   const [people, setPeople] = useState<CompatibleOpenPerson[]>([]);
   const [hasAvailability, setHasAvailability] = useState(false);
-  const [hours, setHours] = useState(48);
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -65,7 +63,7 @@ export function OpenToCatchExperience() {
   async function publish() {
     setIsSaving(true);
     setError('');
-    const result = await publishOpenToCatch(hours);
+    const result = await publishOpenToCatch();
     if (result.error) {
       setError(result.error);
       setIsSaving(false);
@@ -130,20 +128,9 @@ export function OpenToCatchExperience() {
               <Text style={styles.cardTitle}>Turn on Open to Catch</Text>
               <Text style={styles.muted}>
                 Compatible people can see only your first name, broad area, shared activities,
-                and overlapping windows.
+                and overlapping windows. It stays on until you pause it.
               </Text>
             </View>
-          </View>
-          <Text style={styles.smallLabel}>Stay open for</Text>
-          <View style={styles.chips}>
-            {[24, 48, 72].map((option) => (
-              <Chip
-                key={option}
-                label={`${option} hours`}
-                onPress={() => setHours(option)}
-                selected={hours === option}
-              />
-            ))}
           </View>
           <Button
             disabled={isSaving}
@@ -160,26 +147,18 @@ export function OpenToCatchExperience() {
             <View style={styles.activeTop}>
               <View style={styles.liveDot} />
               <Text style={styles.activeTitle}>You are Open to Catch</Text>
-              <Text style={styles.activeUntil}>
-                until{' '}
-                {new Intl.DateTimeFormat('en-US', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                }).format(new Date(listing.expiresAt))}
-              </Text>
+              <Text style={styles.activeState}>ON</Text>
             </View>
             <Text style={styles.activeSummary}>{listing.broadAvailability}</Text>
             <View style={styles.activeActions}>
               <Pressable
-                disabled={isSaving}
-                onPress={publish}
-                style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}>
-                <Ionicons color={colors.forest} name="refresh" size={16} />
-                <Text style={styles.refreshText}>Refresh {hours}h</Text>
+                onPress={() => router.push('/availability')}
+                style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}>
+                <Ionicons color={colors.forest} name="options-outline" size={16} />
+                <Text style={styles.editText}>Edit availability</Text>
               </Pressable>
               <Pressable disabled={isSaving} onPress={close} style={styles.closeButton}>
-                <Text style={styles.closeText}>Turn off</Text>
+                <Text style={styles.closeText}>{isSaving ? 'Pausing...' : 'Pause'}</Text>
               </Pressable>
             </View>
           </View>
@@ -272,8 +251,6 @@ const styles = StyleSheet.create({
   },
   cardText: { flex: 1, gap: 3 },
   cardTitle: { color: colors.ink, fontSize: 16, fontWeight: '900' },
-  smallLabel: { color: colors.muted, fontSize: 10, fontWeight: '800' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   activeCard: {
     gap: 10,
     marginTop: spacing.xl,
@@ -284,10 +261,20 @@ const styles = StyleSheet.create({
   activeTop: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   liveDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.gold },
   activeTitle: { color: colors.white, fontSize: 14, fontWeight: '900' },
-  activeUntil: { flex: 1, color: '#BCD0C2', fontSize: 10, textAlign: 'right' },
+  activeState: {
+    marginLeft: 'auto',
+    borderRadius: radius.pill,
+    backgroundColor: '#2C6A4A',
+    color: colors.white,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   activeSummary: { color: '#E3ECE5', fontSize: 11, lineHeight: 17 },
   activeActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  refreshButton: {
+  editButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -297,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: colors.white,
   },
-  refreshText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
+  editText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
   closeButton: { alignItems: 'center', justifyContent: 'center', minHeight: 40, paddingHorizontal: 10 },
   closeText: { color: '#FFD7C8', fontSize: 11, fontWeight: '800' },
   section: { gap: 11, marginTop: spacing.xl },

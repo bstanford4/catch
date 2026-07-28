@@ -55,9 +55,9 @@ events.
 Live list discovery, join requests, transactional host approval, and protected
 location release are implemented. Saved Catch Mates, private friend codes, and
 direct proposals with immutable first revisions are also implemented; accepting
-a proposal creates an unlisted two-person Catch. Expiring Open to Catch listings
-now show compatible people using shared activities, broad availability, and
-area; newly posted Catches create matching in-app alerts. Remaining work is
+a proposal creates an unlisted two-person Catch. Persistent Open to Catch listings
+now show compatible people using shared activities, day-specific broad availability,
+and area; newly posted Catches create matching in-app alerts. Remaining work is
 distance-weighted scoring, map mode, counter-proposal revisions, external
 invitations, and device push delivery.
 
@@ -89,7 +89,7 @@ followers, complex gamification, global athletic leaderboards, or tokens.
 
 ## Future product opportunities
 
-- **Catch+**: advanced filters, recurring availability, enhanced Catch Cards,
+- **Catch+**: advanced filters, calendar exceptions and syncing, enhanced Catch Cards,
   personal history, organizer tools, and incognito discovery.
 - Equipment partnerships and sporting-goods recommendations.
 - Promoted catches and verified venue tools.

@@ -8,7 +8,8 @@ of people to judge. It supports three complementary intents:
 
 1. **Catch Now** — find something in the next few hours.
 2. **Post a Catch** — create a specific scheduled activity.
-3. **Open to Catch** — publish coarse, expiring standing availability.
+3. **Open to Catch** — opt into persistent, coarse standing availability that
+   can be edited or paused at any time.
 
 The primary validation question is whether users complete real catches with
 people they would not otherwise have played with.
@@ -61,7 +62,8 @@ screen-reader order or device safe areas.
   ordinary discovery tables.
 - Athletic ratings are opt-in visibility and catch-specific filtering only.
 - A report is private moderation data. Public free-text accusations do not exist.
-- Standing availability expires and needs reconfirmation.
+- Standing availability remains private unless Open to Catch is on, and can be
+  changed, cleared, or paused at any time.
 - Demo mode is a first-class development capability, not a production fallback.
 
 ## External prerequisites
@@ -80,4 +82,3 @@ None are needed for the seeded demo. Later phases require:
 - Final moderation service-level targets and operator tooling.
 - Whether 21+ affirmation is stored as a boolean or verified birth date. The MVP
   uses an affirmation and intentionally avoids collecting birth dates.
-

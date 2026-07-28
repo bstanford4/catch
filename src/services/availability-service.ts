@@ -9,6 +9,8 @@ export type AvailabilityWindow = {
   weekday: number;
 };
 
+export type AvailabilitySelection = Pick<AvailabilityWindow, 'broadPeriod' | 'weekday'>;
+
 type AvailabilityRow = {
   broad_period: AvailabilityPeriod;
   expires_at: string;
@@ -44,8 +46,7 @@ export async function listAvailability(userId: string) {
 
 export async function saveAvailability(
   userId: string,
-  weekdays: number[],
-  periods: AvailabilityPeriod[],
+  selections: AvailabilitySelection[],
 ) {
   if (!supabase) return { error: 'Supabase is not configured.' };
 
@@ -55,21 +56,23 @@ export async function saveAvailability(
     .eq('user_id', userId);
   if (deleteError) return { error: deleteError.message };
 
-  if (!weekdays.length || !periods.length) return { error: undefined };
+  if (!selections.length) {
+    await supabase.rpc('refresh_open_to_catch_if_active');
+    return { error: undefined };
+  }
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 90);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  const rows = weekdays.flatMap((weekday) =>
-    periods.map((broadPeriod) => ({
-      broad_period: broadPeriod,
-      expires_at: expiresAt.toISOString(),
-      timezone,
-      user_id: userId,
-      weekday,
-    })),
-  );
+  const rows = selections.map(({ broadPeriod, weekday }) => ({
+    broad_period: broadPeriod,
+    expires_at: '9999-12-31T23:59:59.999Z',
+    timezone,
+    user_id: userId,
+    weekday,
+  }));
 
   const { error } = await supabase.from('availability_windows').insert(rows);
-  return { error: error?.message };
+  if (error) return { error: error.message };
+
+  const { error: refreshError } = await supabase.rpc('refresh_open_to_catch_if_active');
+  return { error: refreshError?.message };
 }

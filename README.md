@@ -8,8 +8,9 @@ profile onboarding, broad availability, equipment management, Catch Now and
 scheduled Catch creation, live discovery, join requests, host approval, and
 protected private meeting locations. Catch Mates adds saved connections,
 single-use private friend codes, and direct Catch proposals. Open to Catch adds
-expiring opt-in listings, compatible-person explanations, and in-app alerts for
-newly posted matching Catches. It runs without credentials in demo mode and
+persistent opt-in listings, day-specific recurring availability, compatible-person
+explanations, and in-app alerts for newly posted matching Catches. It runs without
+credentials in demo mode and
 establishes the product shell, navigation, design system, account
 creation and sign-in, discovery feed, creation flow, messages, profile,
 empty/loading/error states, and backend boundaries needed for later phases.
@@ -76,8 +77,8 @@ secret.
 Phase 0 and Phase 1 are implemented. Phase 2 authentication, initial profile
 onboarding, broad availability, and equipment are connected: account creation,
 email confirmation, sign-in, persisted sessions, sign-out, first name, broad
-area, activity preferences, discovery radius, 21+ affirmation, expiring
-availability windows, equipment records, and private compressed equipment photos
+area, activity preferences, discovery radius, 21+ affirmation, persistent
+day-and-time availability windows, equipment records, and private compressed equipment photos
 use Supabase when credentials are present. Hosts can create, edit, review, and
 cancel persisted Catch Now and scheduled plans. Signed-in users can discover
 live Catches, request to join, and receive host approval. Public places, custom
