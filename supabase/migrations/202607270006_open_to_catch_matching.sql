@@ -252,7 +252,7 @@ begin
     matches.activity_names,
     matches.activity_slugs,
     matches.activity_emojis,
-    overlaps.overlap_labels,
+    availability_matches.overlap_labels,
     candidate.expires_at
   from public.open_to_catch_listings candidate
   join public.profiles candidate_profile on candidate_profile.user_id = candidate.user_id
@@ -290,13 +290,13 @@ begin
      and candidate_window.expires_at > now()
     where own_window.user_id = caller_id
       and own_window.expires_at > now()
-  ) overlaps
+  ) availability_matches
   where candidate.user_id <> caller_id
     and candidate.active
     and candidate.expires_at > now()
     and private.area_labels_match(own.area_label, candidate.area_label)
     and cardinality(matches.activity_ids) > 0
-    and cardinality(overlaps.overlap_labels) > 0
+    and cardinality(availability_matches.overlap_labels) > 0
     and not private.users_blocked(caller_id, candidate.user_id)
   order by cardinality(matches.activity_ids) desc, candidate.created_at desc;
 end
