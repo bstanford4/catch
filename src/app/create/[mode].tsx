@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -23,18 +23,6 @@ import {
 } from '@/services/catch-service';
 
 const durations = [30, 45, 60, 90];
-const quickStarts = [
-  { label: 'As soon as possible', offset: 30 },
-  { label: 'In 1 hour', offset: 60 },
-  { label: 'In 2 hours', offset: 120 },
-];
-const scheduledHours = [
-  { hour: 9, label: '9 AM' },
-  { hour: 12, label: 'Noon' },
-  { hour: 15, label: '3 PM' },
-  { hour: 18, label: '6 PM' },
-  { hour: 20, label: '8 PM' },
-];
 const vibes = ['Easygoing', 'Beginner-friendly', 'Bring the heat'];
 const otherActivity: CatchCatalogActivity = {
   color: '#F6EADF',
@@ -74,10 +62,6 @@ const demoVenues: CatchVenue[] = [
     name: 'Willowmere Courts',
   },
 ];
-
-function dateKey(date: Date) {
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-}
 
 function dateInputValue(date: Date) {
   const year = date.getFullYear();
@@ -135,11 +119,8 @@ export default function CreateModeScreen() {
   const [durationMinutes, setDurationMinutes] = useState(45);
   const [customDuration, setCustomDuration] = useState(false);
   const [customDurationText, setCustomDurationText] = useState('75');
-  const [nowOffsetMinutes, setNowOffsetMinutes] = useState(60);
-  const [scheduledDay, setScheduledDay] = useState(1);
-  const [scheduledHour, setScheduledHour] = useState(18);
-  const [timingMode, setTimingMode] = useState<'soon' | 'scheduled' | 'custom'>(
-    params.mode === 'now' ? 'soon' : 'scheduled',
+  const [timingMode, setTimingMode] = useState<'asap' | 'hour' | 'tomorrow' | 'custom'>(
+    params.mode === 'now' ? 'asap' : 'tomorrow',
   );
   const [baseNow] = useState(() => new Date());
   const initialCustomStart = new Date(baseNow.getTime() + 60 * 60_000);
@@ -153,27 +134,6 @@ export default function CreateModeScreen() {
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
-
-  const dayOptions = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, offset) => {
-        const date = new Date(baseNow);
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + offset);
-        const label =
-          offset === 0
-            ? 'Today'
-            : offset === 1
-              ? 'Tomorrow'
-              : new Intl.DateTimeFormat('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                }).format(date);
-        return { date, label, offset };
-      }),
-    [baseNow],
-  );
 
   useEffect(() => {
     if (!session) return;
@@ -238,21 +198,7 @@ export default function CreateModeScreen() {
         const start = new Date(item.startsAt);
         setCustomDate(dateInputValue(start));
         setCustomTime(timeInputValue(start));
-        if (item.kind === 'now') {
-          setTimingMode('custom');
-        } else {
-          const day = dayOptions.find((option) => dateKey(option.date) === dateKey(start));
-          const exactHour = scheduledHours.find(
-            (option) => option.hour === start.getHours() && start.getMinutes() === 0,
-          );
-          if (day && exactHour) {
-            setTimingMode('scheduled');
-            setScheduledDay(day.offset);
-            setScheduledHour(exactHour.hour);
-          } else {
-            setTimingMode('custom');
-          }
-        }
+        setTimingMode('custom');
       }
       if (privateLocationResult.error && catchResult.data?.locationType === 'private') {
         setError(privateLocationResult.error);
@@ -269,7 +215,6 @@ export default function CreateModeScreen() {
       active = false;
     };
   }, [
-    dayOptions,
     editingId,
     params.activity,
     profile?.activitySlugs,
@@ -289,24 +234,49 @@ export default function CreateModeScreen() {
         : durationMinutes;
   const startsAt = useMemo(() => {
     if (timingMode === 'custom') return parseLocalDateTime(customDate, customTime);
-    if (timingMode === 'soon') {
-      const date = new Date(baseNow.getTime() + nowOffsetMinutes * 60_000);
+    if (timingMode === 'asap' || timingMode === 'hour') {
+      const offsetMinutes = timingMode === 'asap' ? 30 : 60;
+      const date = new Date(baseNow.getTime() + offsetMinutes * 60_000);
       date.setSeconds(0, 0);
       return date;
     }
-    const date = new Date(dayOptions[scheduledDay]?.date ?? dayOptions[1].date);
-    date.setHours(scheduledHour, 0, 0, 0);
+    const date = new Date(baseNow);
+    date.setDate(date.getDate() + 1);
+    date.setHours(18, 0, 0, 0);
     return date;
   }, [
     baseNow,
     customDate,
     customTime,
-    dayOptions,
-    nowOffsetMinutes,
-    scheduledDay,
-    scheduledHour,
     timingMode,
   ]);
+  const whenOptions = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    const asap = new Date(baseNow.getTime() + 30 * 60_000);
+    const hour = new Date(baseNow.getTime() + 60 * 60_000);
+    const tomorrow = new Date(baseNow);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(18, 0, 0, 0);
+    return [
+      { detail: formatter.format(asap), id: 'asap' as const, title: 'As soon as possible' },
+      { detail: formatter.format(hour), id: 'hour' as const, title: 'In 1 hour' },
+      { detail: formatter.format(tomorrow), id: 'tomorrow' as const, title: 'Tomorrow evening' },
+      {
+        detail:
+          timingMode === 'custom' && startsAt
+            ? formatter.format(startsAt)
+            : 'Enter one exact date and time',
+        id: 'custom' as const,
+        title: 'Choose a date & time',
+      },
+    ];
+  }, [baseNow, startsAt, timingMode]);
 
   if (isOpenToCatch) {
     return (
@@ -502,65 +472,33 @@ export default function CreateModeScreen() {
       />
 
       <Text style={styles.label}>When</Text>
-      <View style={styles.chips}>
-        {quickStarts.map((option) => (
-          <Chip
-            key={option.offset}
-            label={option.label}
-            onPress={() => {
-              setTimingMode('soon');
-              setNowOffsetMinutes(option.offset);
-            }}
-            selected={timingMode === 'soon' && nowOffsetMinutes === option.offset}
-          />
-        ))}
-        <Chip
-          label="Choose day & time"
-          onPress={() => setTimingMode('scheduled')}
-          selected={timingMode === 'scheduled'}
-        />
-        <Chip
-          label="Enter exact date/time"
-          onPress={() => setTimingMode('custom')}
-          selected={timingMode === 'custom'}
-        />
+      <View style={styles.whenList}>
+        {whenOptions.map((option) => {
+          const selected = timingMode === option.id;
+          return (
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              key={option.id}
+              onPress={() => setTimingMode(option.id)}
+              style={[styles.whenOption, selected && styles.whenOptionSelected]}>
+              <View style={[styles.radio, selected && styles.radioSelected]}>
+                {selected ? <View style={styles.radioDot} /> : null}
+              </View>
+              <View style={styles.whenText}>
+                <Text style={styles.whenTitle}>{option.title}</Text>
+                <Text style={styles.whenDetail}>{option.detail}</Text>
+              </View>
+              {option.id === 'custom' ? (
+                <Ionicons color={colors.muted} name="calendar-outline" size={19} />
+              ) : null}
+            </Pressable>
+          );
+        })}
       </View>
-      {timingMode === 'scheduled' ? (
-        <>
-          <ScrollView
-            contentContainerStyle={styles.horizontalChoices}
-            horizontal
-            showsHorizontalScrollIndicator={false}>
-            {dayOptions.map((option) => (
-              <Chip
-                key={option.offset}
-                label={option.label}
-                onPress={() => {
-                  setTimingMode('scheduled');
-                  setScheduledDay(option.offset);
-                }}
-                selected={scheduledDay === option.offset}
-              />
-            ))}
-          </ScrollView>
-          <View style={styles.chips}>
-            {scheduledHours.map((option) => (
-              <Chip
-                key={option.hour}
-                label={option.label}
-                onPress={() => {
-                  setTimingMode('scheduled');
-                  setScheduledHour(option.hour);
-                }}
-                selected={scheduledHour === option.hour}
-              />
-            ))}
-          </View>
-        </>
-      ) : null}
       {timingMode === 'custom' ? (
         <View style={styles.revealFields}>
-          <Text style={styles.revealLabel}>Custom start</Text>
+          <Text style={styles.revealLabel}>Exact start</Text>
           <View style={styles.customFieldRow}>
             <View style={styles.customField}>
               <Text style={styles.smallLabel}>Date</Text>
@@ -589,7 +527,7 @@ export default function CreateModeScreen() {
               />
             </View>
           </View>
-          <Text style={styles.helper}>Example: 2026-07-26 at 18:30 means July 26 at 6:30 PM.</Text>
+          <Text style={styles.helper}>Example: 2026-07-28 at 18:30 means July 28 at 6:30 PM.</Text>
         </View>
       ) : null}
 
@@ -1027,7 +965,27 @@ const styles = StyleSheet.create({
   customField: { flex: 1, gap: 6 },
   smallLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  horizontalChoices: { gap: 8, paddingBottom: 10 },
+  whenList: {
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+  },
+  whenOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    minHeight: 64,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+  },
+  whenOptionSelected: { backgroundColor: colors.paleGreen },
+  whenText: { flex: 1, gap: 2 },
+  whenTitle: { color: colors.ink, fontSize: 14, fontWeight: '800' },
+  whenDetail: { color: colors.muted, fontSize: 10, lineHeight: 15 },
   venueList: { gap: 9 },
   venue: {
     flexDirection: 'row',
