@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
+import { OpenToCatchExperience } from '@/components/open-to-catch-experience';
 import { Screen } from '@/components/ui/screen';
 import { colors, radius, spacing } from '@/constants/theme';
 import { activities as demoActivities } from '@/data/demo';
@@ -279,24 +280,7 @@ export default function CreateModeScreen() {
   }, [baseNow, startsAt, timingMode]);
 
   if (isOpenToCatch) {
-    return (
-      <Screen>
-        <Text style={styles.eyebrow}>OPEN TO CATCH</Text>
-        <Text style={styles.title}>Let a good plan find you.</Text>
-        <Text style={styles.subtitle}>
-          Your broad availability is ready now. Publishing it to nearby people is the next
-          proposal-and-discovery slice.
-        </Text>
-        <View style={styles.openCard}>
-          <Ionicons color={colors.forest} name="time-outline" size={28} />
-          <Text style={styles.openTitle}>Set your usual availability</Text>
-          <Text style={styles.openBody}>
-            Choose broad days and time windows without exposing an exact routine or address.
-          </Text>
-          <Button label="Manage availability" onPress={() => router.push('/availability')} />
-        </View>
-      </Screen>
-    );
+    return <OpenToCatchExperience />;
   }
 
   const catchKind: 'now' | 'scheduled' =

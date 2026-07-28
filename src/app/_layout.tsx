@@ -33,6 +33,7 @@ export default function RootLayout() {
           <Stack.Screen name="catch-mates" options={{ title: 'Catch Mates' }} />
           <Stack.Screen name="proposals" options={{ title: 'Catch proposals' }} />
           <Stack.Screen name="propose/[mateId]" options={{ title: 'Propose a Catch' }} />
+          <Stack.Screen name="matches" options={{ title: 'Catches for you' }} />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>

@@ -43,7 +43,8 @@ function parseLocalDateTime(dateValue: string, timeValue: string) {
 }
 
 export default function ProposeCatchScreen() {
-  const { mateId = '', name = 'your Catch Mate' } = useLocalSearchParams<{
+  const { activity, mateId = '', name = 'your Catch Mate' } = useLocalSearchParams<{
+    activity?: string;
     mateId: string;
     name?: string;
   }>();
@@ -74,14 +75,18 @@ export default function ProposeCatchScreen() {
       if (!active) return;
       setActivities(result.activities);
       setVenues(result.venues);
-      setActivityId(result.activities[0]?.id ?? '');
+      setActivityId(
+        result.activities.find((item) => item.id === activity || item.slug === activity)?.id ??
+          result.activities[0]?.id ??
+          '',
+      );
       setError(result.error ?? '');
       setIsLoading(false);
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [activity]);
 
   const selectedVenue = venues.find((venue) => venue.id === venueId) ?? null;
   const startsAt = parseLocalDateTime(dateValue, timeValue);

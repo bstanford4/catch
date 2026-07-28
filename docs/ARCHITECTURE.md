@@ -123,6 +123,8 @@ Trust and operations:
 - `ratings` with constrained subject/aspect combinations.
 - `reliability_events` as an append-only audit trail.
 - `notification_preferences` and `device_push_tokens`.
+- `catch_match_notifications` — privacy-safe in-app delivery records generated
+  when a newly posted Catch matches activity, broad availability, and area.
 
 `CatchCardSummary` is a privacy-aware read model rather than a source-of-truth
 table. It should be exposed through a view or RPC so rating visibility is applied

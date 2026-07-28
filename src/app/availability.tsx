@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +30,7 @@ const periods: { detail: string; label: string; value: AvailabilityPeriod }[] = 
 ];
 
 export default function AvailabilityScreen() {
+  const router = useRouter();
   const { session } = useAuth();
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [selectedPeriods, setSelectedPeriods] = useState<AvailabilityPeriod[]>([]);
@@ -171,6 +173,24 @@ export default function AvailabilityScreen() {
         label={isSaving ? 'Saving…' : 'Save availability'}
         onPress={save}
       />
+      {selectedDays.length && selectedPeriods.length ? (
+        <View style={styles.matchCard}>
+          <Ionicons color={colors.forest} name="people-outline" size={21} />
+          <View style={styles.matchText}>
+            <Text style={styles.matchTitle}>Ready to see who lines up?</Text>
+            <Text style={styles.matchBody}>
+              Turn on Open to Catch to see people with overlapping activities and broad windows.
+            </Text>
+          </View>
+          <Pressable
+            accessibilityLabel="Open matching people"
+            onPress={() =>
+              router.push({ pathname: '/create/[mode]', params: { mode: 'open' } })
+            }>
+            <Ionicons color={colors.forest} name="arrow-forward-circle" size={28} />
+          </Pressable>
+        </View>
+      ) : null}
       {(selectedDays.length === 0 || selectedPeriods.length === 0) && !isLoading ? (
         <Text style={styles.clearHint}>Saving with an empty selection clears your availability.</Text>
       ) : null}
@@ -247,5 +267,17 @@ const styles = StyleSheet.create({
   error: { marginBottom: 12, color: colors.error, fontSize: 13, textAlign: 'center' },
   success: { marginBottom: 12, color: colors.forest, fontSize: 13, fontWeight: '700', textAlign: 'center' },
   clearHint: { marginTop: 10, color: colors.muted, fontSize: 11, textAlign: 'center' },
+  matchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    marginTop: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.paleGreen,
+    padding: 12,
+  },
+  matchText: { flex: 1, gap: 2 },
+  matchTitle: { color: colors.forest, fontSize: 12, fontWeight: '900' },
+  matchBody: { color: colors.muted, fontSize: 10, lineHeight: 15 },
   pressed: { opacity: 0.75 },
 });

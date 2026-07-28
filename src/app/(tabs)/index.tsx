@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -11,10 +12,15 @@ import { Screen } from '@/components/ui/screen';
 import { activities, catches, catchMates } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
+import {
+  type CatchMatchNotification,
+  listCatchMatchNotifications,
+} from '@/services/matching-service';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, session } = useAuth();
+  const [unreadMatches, setUnreadMatches] = useState(0);
   const firstName = profile?.firstName ?? 'Blake';
   const initials =
     firstName
@@ -33,6 +39,23 @@ export default function HomeScreen() {
     .format(new Date())
     .toUpperCase();
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) return;
+      let active = true;
+      void listCatchMatchNotifications().then((result) => {
+        if (active && !result.error) {
+          setUnreadMatches(
+            result.data.filter((item: CatchMatchNotification) => !item.readAt).length,
+          );
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }, [session]),
+  );
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -40,9 +63,24 @@ export default function HomeScreen() {
           <Text style={styles.eyebrow}>{todayLabel}</Text>
           <Text style={styles.greeting}>Hey, {firstName}.</Text>
         </View>
-        <Pressable accessibilityLabel="Open profile" onPress={() => router.push('/(tabs)/profile')}>
-          <Avatar initials={initials} size={45} tone="orange" />
-        </Pressable>
+        <View style={styles.headerActions}>
+          {session ? (
+            <Pressable
+              accessibilityLabel={`${unreadMatches} matching Catch notifications`}
+              onPress={() => router.push('/matches')}
+              style={styles.notificationButton}>
+              <Ionicons color={colors.forest} name="notifications-outline" size={21} />
+              {unreadMatches ? (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>{unreadMatches}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          ) : null}
+          <Pressable accessibilityLabel="Open profile" onPress={() => router.push('/(tabs)/profile')}>
+            <Avatar initials={initials} size={45} tone="orange" />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.quickNav}>
@@ -158,6 +196,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.sm,
   },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  notificationButton: {
+    width: 43,
+    height: 43,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 15,
+    backgroundColor: colors.paper,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: colors.orange,
+  },
+  notificationBadgeText: { color: colors.white, fontSize: 9, fontWeight: '900' },
   eyebrow: {
     color: colors.orangeDark,
     fontSize: 10,
