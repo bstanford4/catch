@@ -59,13 +59,16 @@ a proposal creates an unlisted two-person Catch. Persistent Open to Catch listin
 now show compatible people using shared activities, day-specific broad availability,
 and area; newly posted Catches create matching in-app alerts. Remaining work is
 distance-weighted scoring, map mode, counter-proposal revisions, external
-invitations, and device push delivery.
+invitations, and push-delivery operations.
 
 ### Phase 6 — messages and notifications
 
 Realtime proposal/Catch threads, unread state, and contextual system messages
-are implemented. Remaining work is push token lifecycle, editable notification
-preferences, deep links from device notifications, and privacy-safe push copy.
+are implemented. Editable notification preferences, native Expo token
+registration/revocation, preference-aware database event delivery, safe deep
+links, and privacy-safe lock-screen copy are implemented. Remaining work is EAS
+credential provisioning, native-device validation, Expo receipt processing,
+stale-token cleanup, and notification analytics.
 
 ### Phase 7 — completion and reputation
 
@@ -122,7 +125,8 @@ justify one.
 - Discovery currently filters by broad visibility and time, not geographic
   distance; the "within 10 miles" label remains aspirational until safe PostGIS
   radius queries are connected.
-- Map, push, and moderation operations are interfaces or schema foundations, not
-  production integrations. Realtime is currently limited to active message
-  threads.
+- Push is integrated through Expo's API but needs an EAS-linked native build and
+  platform credentials before device validation. Delivery receipts and automatic
+  stale-token cleanup are not yet implemented. Map and moderation operations
+  remain foundations. Realtime is currently limited to active message threads.
 - Native device and app-store validation require external accounts and hardware.

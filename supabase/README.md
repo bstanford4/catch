@@ -30,11 +30,18 @@ The local Expo demo does not require Supabase. To enable the backend:
 11. Run `migrations/202607290009_contextual_messaging.sql` once. It adds
     private proposal/Catch conversations, unread state, system messages, and
     Realtime delivery for approved thread members.
-12. Run `seed.sql` for catalog and public-venue demo records.
-13. Copy `.env.example` to `.env` and add the project URL and client-safe
+12. Run `migrations/202607290010_native_push_notifications.sql` once. It adds
+    validated Expo device-token registration, a private notification outbox,
+    preference-aware event triggers, and asynchronous delivery through `pg_net`.
+13. Run `seed.sql` for catalog and public-venue demo records.
+14. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-14. Add `catch://**` to the project's Auth redirect URLs.
-15. Restart Expo so client environment variables are rebundled.
+15. Add `catch://**` to the project's Auth redirect URLs.
+16. Link the app to Expo EAS, put its project ID in
+    `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
+    install a development or production build. Expo Go and the web preview
+    cannot validate production push delivery.
+17. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 
@@ -70,3 +77,7 @@ not a substitute for a launch security review. Private location decryption now
 happens in an authorization-checked security-definer function after participant
 approval. A launch hardening pass must add immutable access audit events and
 rate limits.
+
+Push requests are placed in a private outbox and sent asynchronously to Expo.
+The current MVP does not yet poll Expo push receipts or automatically revoke
+tokens reported as unregistered; add that operational worker before launch.

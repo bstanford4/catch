@@ -3,6 +3,7 @@ import type { PropsWithChildren } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { isDemoMode, supabase } from '@/lib/supabase';
+import { revokeStoredPushToken } from '@/services/notification-service';
 
 type AuthResult = {
   error?: string;
@@ -219,6 +220,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       signOut: async () => {
         if (!supabase) return {};
+        if (session) await revokeStoredPushToken(session.user.id);
         const { error } = await supabase.auth.signOut();
         if (!error) setSession(null);
         return error ? { error: error.message } : {};

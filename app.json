@@ -8,9 +8,12 @@
     "scheme": "catch",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.bstanford4.catch",
+      "icon": "./assets/expo.icon",
+      "supportsTablet": false
     },
     "android": {
+      "package": "com.bstanford4.catch",
       "adaptiveIcon": {
         "backgroundColor": "#F6F1E7",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -31,6 +34,14 @@
           "photosPermission": "Catch uses your selected photos to show sporting equipment on your profile.",
           "cameraPermission": "Catch uses the camera when you choose to photograph sporting equipment.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#F26B3A",
+          "defaultChannel": "catch-updates",
+          "icon": "./assets/images/android-icon-monochrome.png"
         }
       ],
       [

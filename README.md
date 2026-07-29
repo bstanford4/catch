@@ -11,7 +11,9 @@ single-use private friend codes, and direct Catch proposals. Open to Catch adds
 persistent opt-in listings, day-specific recurring availability, compatible-person
 explanations, and in-app alerts for newly posted matching Catches. Contextual
 messaging adds private proposal and Catch threads, unread counts, system
-updates, and live Realtime refresh. It runs without credentials in demo mode and
+updates, and live Realtime refresh. Notification settings add account-wide
+category controls, device-token lifecycle, privacy-safe deep links, and
+automatic Expo push dispatch. It runs without credentials in demo mode and
 establishes the product shell, navigation, design system, account
 creation and sign-in, discovery feed, creation flow, messages, profile,
 empty/loading/error states, and backend boundaries needed for later phases.
@@ -64,6 +66,7 @@ secret.
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client-safe Supabase publishable key |
 | `EXPO_PUBLIC_MAP_PROVIDER` | Reserved map adapter selection; defaults to `mock` |
+| `EXPO_PUBLIC_EAS_PROJECT_ID` | Expo EAS project ID used to issue native push tokens |
 
 ## Documentation
 
@@ -91,9 +94,11 @@ proposals create unlisted two-person Catches. Open to Catch matches shared
 activities, broad availability, and broad area; saved preferences privately
 generate in-app Catch alerts. Signed-in members can coordinate inside proposal
 threads and approved Catch conversations without exposing those messages to
-unrelated users.
-Native push delivery, production maps, and app-store releases are intentionally
-deferred.
+unrelated users. Members can edit notification categories, register or revoke a
+native device, and open the correct in-app screen from privacy-safe push alerts.
+Production maps and app-store releases remain deferred. Native push requires an
+Expo/EAS-linked native build and platform credentials; it does not run in the
+web preview.
 See the roadmap for details.
 
 Catch creation includes flexible "Other" options for a custom activity,

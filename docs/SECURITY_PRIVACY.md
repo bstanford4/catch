@@ -67,6 +67,10 @@ move.
 - `.env` is ignored. CI and EAS secrets are injected by environment.
 - Database service-role keys, map secret keys, and signing credentials never use
   `EXPO_PUBLIC_` variables.
+- Device push tokens can be registered or revoked only through validated,
+  authenticated functions. The notification outbox is not exposed to clients.
+- Push payloads use internal-path allowlisting and generic lock-screen text.
+  They never contain message bodies, exact addresses, or private instructions.
 
 ## Authorization invariants
 
@@ -107,3 +111,4 @@ Blocking must:
 - Rate limits for auth, discovery, proposals, messages, reports, and invites.
 - App-store age rating and alcohol-reference review.
 - Incident response and urgent safety escalation process.
+- Push receipt processing, stale-token revocation, and alert-volume monitoring.

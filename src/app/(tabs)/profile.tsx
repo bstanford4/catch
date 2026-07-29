@@ -97,14 +97,24 @@ export default function ProfileScreen() {
           onPress: () => router.push('/catch-mates'),
         },
         { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
-        { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
+        {
+          icon: 'notifications-outline',
+          label: 'Notifications',
+          detail: 'Push alerts and preferences',
+          onPress: () => router.push('/notification-settings'),
+        },
       ]
     : [
         { icon: 'person-outline', label: 'Edit profile', detail: 'Photo, activities, bio' },
         { icon: 'basketball-outline', label: 'Equipment', detail: '4 items · 1 extra glove' },
         { icon: 'time-outline', label: 'Availability', detail: 'Wed & Fri afternoons' },
         { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
-        { icon: 'notifications-outline', label: 'Notifications', detail: 'Nearby catches on' },
+        {
+          icon: 'notifications-outline',
+          label: 'Notifications',
+          detail: 'Push alerts and preferences',
+          onPress: () => router.push('/notification-settings'),
+        },
       ];
 
   async function leaveAccount() {
