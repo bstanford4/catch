@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -117,6 +117,9 @@ export default function CreateModeScreen() {
   const [privateArrivalNotes, setPrivateArrivalNotes] = useState('');
   const [privateLocationConfirmed, setPrivateLocationConfirmed] = useState(false);
   const [title, setTitle] = useState(`${initialActivity.name} catch`);
+  const automaticTitle = useRef<string | null>(
+    editingId ? null : `${initialActivity.name} catch`,
+  );
   const [durationMinutes, setDurationMinutes] = useState(45);
   const [customDuration, setCustomDuration] = useState(false);
   const [customDurationText, setCustomDurationText] = useState('75');
@@ -171,7 +174,11 @@ export default function CreateModeScreen() {
           setActivitySlug(chosen?.slug ?? 'baseball');
           setVenueId(catalogResult.venues[0]?.id ?? '');
           setLocationType(catalogResult.venues[0] ? 'catalog' : 'custom_public');
-          if (chosen) setTitle(`${chosen.name} catch`);
+          if (chosen) {
+            const nextTitle = `${chosen.name} catch`;
+            automaticTitle.current = nextTitle;
+            setTitle(nextTitle);
+          }
         }
       }
 
@@ -187,6 +194,7 @@ export default function CreateModeScreen() {
         setLocationType(item.locationType);
         setCustomVenueName(item.customVenueName ?? '');
         setCustomVenueArea(item.customVenueArea ?? profile?.areaLabel ?? '');
+        automaticTitle.current = null;
         setTitle(item.title);
         setDurationMinutes(item.durationMinutes);
         setCustomDuration(!durations.includes(item.durationMinutes));
@@ -225,6 +233,33 @@ export default function CreateModeScreen() {
 
   const selectedActivity =
     catalog.find((activity) => activity.slug === activitySlug) ?? catalog[0];
+
+  function selectActivity(activity: CatchCatalogActivity) {
+    const previousAutomaticTitle = automaticTitle.current;
+    const nextAutomaticTitle = `${activity.name} catch`;
+    setActivitySlug(activity.slug);
+    setTitle((current) =>
+      previousAutomaticTitle !== null && current === previousAutomaticTitle
+        ? nextAutomaticTitle
+        : current,
+    );
+    automaticTitle.current = nextAutomaticTitle;
+  }
+
+  function changeCustomActivityName(value: string) {
+    const previousAutomaticTitle = automaticTitle.current;
+    const nextAutomaticTitle = `${value.trim() || 'Other'} catch`;
+    setCustomActivityName(value);
+    setTitle((current) =>
+      activitySlug === 'other' &&
+      previousAutomaticTitle !== null &&
+      current === previousAutomaticTitle
+        ? nextAutomaticTitle
+        : current,
+    );
+    if (activitySlug === 'other') automaticTitle.current = nextAutomaticTitle;
+  }
+
   const selectedVenue =
     locationType === 'catalog' ? venues.find((venue) => venue.id === venueId) ?? null : null;
   const effectiveDuration =
@@ -419,7 +454,7 @@ export default function CreateModeScreen() {
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               key={activity.id}
-              onPress={() => setActivitySlug(activity.slug)}
+              onPress={() => selectActivity(activity)}
               style={[styles.activity, selected && styles.activitySelected]}>
               <Text style={styles.emoji}>{activity.emoji}</Text>
               <Text style={[styles.activityName, selected && styles.activityNameSelected]}>
@@ -435,7 +470,7 @@ export default function CreateModeScreen() {
           <TextInput
             accessibilityLabel="Custom activity"
             maxLength={60}
-            onChangeText={setCustomActivityName}
+            onChangeText={changeCustomActivityName}
             placeholder="e.g. Wiffle ball, cornhole, kickball"
             placeholderTextColor={colors.muted}
             style={styles.input}
