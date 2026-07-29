@@ -27,11 +27,14 @@ The local Expo demo does not require Supabase. To enable the backend:
     revokes unnecessary Data API access to the project-owned RLS event function
     and optimizes Catch's RLS policies. PostGIS-owned findings require Supabase
     Support or a backed-up extension reinstall.
-11. Run `seed.sql` for catalog and public-venue demo records.
-12. Copy `.env.example` to `.env` and add the project URL and client-safe
+11. Run `migrations/202607290009_contextual_messaging.sql` once. It adds
+    private proposal/Catch conversations, unread state, system messages, and
+    Realtime delivery for approved thread members.
+12. Run `seed.sql` for catalog and public-venue demo records.
+13. Copy `.env.example` to `.env` and add the project URL and client-safe
    publishable key.
-13. Add `catch://**` to the project's Auth redirect URLs.
-14. Restart Expo so client environment variables are rebundled.
+14. Add `catch://**` to the project's Auth redirect URLs.
+15. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

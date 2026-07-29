@@ -9,8 +9,9 @@ scheduled Catch creation, live discovery, join requests, host approval, and
 protected private meeting locations. Catch Mates adds saved connections,
 single-use private friend codes, and direct Catch proposals. Open to Catch adds
 persistent opt-in listings, day-specific recurring availability, compatible-person
-explanations, and in-app alerts for newly posted matching Catches. It runs without
-credentials in demo mode and
+explanations, and in-app alerts for newly posted matching Catches. Contextual
+messaging adds private proposal and Catch threads, unread counts, system
+updates, and live Realtime refresh. It runs without credentials in demo mode and
 establishes the product shell, navigation, design system, account
 creation and sign-in, discovery feed, creation flow, messages, profile,
 empty/loading/error states, and backend boundaries needed for later phases.
@@ -88,7 +89,9 @@ Catch Mates can save approved co-participants or connect known friends through a
 private code without exposing a searchable member directory. Accepted direct
 proposals create unlisted two-person Catches. Open to Catch matches shared
 activities, broad availability, and broad area; saved preferences privately
-generate in-app Catch alerts.
+generate in-app Catch alerts. Signed-in members can coordinate inside proposal
+threads and approved Catch conversations without exposing those messages to
+unrelated users.
 Native push delivery, production maps, and app-store releases are intentionally
 deferred.
 See the roadmap for details.

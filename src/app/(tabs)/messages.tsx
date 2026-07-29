@@ -1,17 +1,49 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
-import { messageThreads } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
+import { messageThreads } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
+import { messageTimestamp } from '@/services/message-utils';
+import {
+  type MessageThread,
+  listMessageThreads,
+  subscribeToMessageThreads,
+} from '@/services/messaging-service';
 
 export default function MessagesScreen() {
   const router = useRouter();
   const { session } = useAuth();
+  const [threads, setThreads] = useState<MessageThread[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(session));
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    if (!session) return;
+    const result = await listMessageThreads();
+    setThreads(result.data);
+    setError(result.error ?? '');
+    setIsLoading(false);
+  }, [session]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+
+  useEffect(() => {
+    if (!session) return;
+    return subscribeToMessageThreads(() => {
+      void load();
+    });
+  }, [load, session]);
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -19,57 +51,115 @@ export default function MessagesScreen() {
           <Text style={styles.eyebrow}>KEEP THE PLAN MOVING</Text>
           <Text style={styles.title}>Messages</Text>
         </View>
-        <Pressable accessibilityLabel="Message settings" style={styles.headerButton}>
-          <Ionicons color={colors.forest} name="settings-outline" size={20} />
+        <Pressable
+          accessibilityLabel="View Catch proposals"
+          onPress={() => router.push('/proposals')}
+          style={styles.headerButton}>
+          <Ionicons color={colors.forest} name="paper-plane-outline" size={20} />
         </Pressable>
       </View>
 
       <View style={styles.notice}>
         <Ionicons color={colors.orangeDark} name="lock-closed" size={17} />
-        <Text style={styles.noticeText}>Chat stays attached to a proposal or catch.</Text>
+        <Text style={styles.noticeText}>Chat stays attached to a proposal or Catch.</Text>
       </View>
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {session && isLoading ? (
+        <View style={styles.loading}>
+          <ActivityIndicator color={colors.orange} />
+          <Text style={styles.muted}>Loading conversations...</Text>
+        </View>
+      ) : null}
+
       <View style={styles.list}>
-        {session ? (
+        {session && !isLoading && threads.length === 0 ? (
           <StatePanel
             action="View Catch proposals"
-            body="Direct proposals are live now. Chat threads will unlock in the next messaging slice after a proposal or Catch exists."
-            icon="paper-plane-outline"
+            body="Send a proposal or join a Catch. Its private conversation will appear here."
+            icon="chatbubble-ellipses-outline"
             onAction={() => router.push('/proposals')}
-            title="Start with a proposal"
+            title="No conversations yet"
           />
         ) : null}
-        {!session ? messageThreads.map((thread) => (
-          <Pressable
-            accessibilityLabel={`${thread.name}. ${thread.preview}`}
-            key={thread.id}
-            style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
-            <Avatar
-              initials={thread.initials}
-              size={52}
-              tone={thread.system ? 'green' : 'gold'}
-            />
-            <View style={styles.threadContent}>
-              <View style={styles.threadHeading}>
-                <Text numberOfLines={1} style={styles.threadName}>
-                  {thread.name}
-                </Text>
-                <Text style={styles.timestamp}>{thread.timestamp}</Text>
-              </View>
-              <Text style={styles.context}>{thread.context}</Text>
-              <Text numberOfLines={1} style={styles.preview}>
-                {thread.preview}
-              </Text>
-            </View>
-            {thread.unread ? (
-              <View style={styles.unread}>
-                <Text style={styles.unreadText}>{thread.unread}</Text>
-              </View>
-            ) : null}
-          </Pressable>
-        )) : null}
+        {session
+          ? threads.map((thread) => (
+              <LiveThread
+                item={thread}
+                key={`${thread.type}:${thread.id}`}
+                onPress={() =>
+                  router.push({
+                    pathname: '/message/[type]/[id]',
+                    params: { id: thread.id, type: thread.type },
+                  })
+                }
+              />
+            ))
+          : messageThreads.map((thread) => (
+              <Pressable
+                accessibilityLabel={`${thread.name}. ${thread.preview}`}
+                key={thread.id}
+                style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
+                <Avatar
+                  initials={thread.initials}
+                  size={52}
+                  tone={thread.system ? 'green' : 'gold'}
+                />
+                <View style={styles.threadContent}>
+                  <View style={styles.threadHeading}>
+                    <Text numberOfLines={1} style={styles.threadName}>
+                      {thread.name}
+                    </Text>
+                    <Text style={styles.timestamp}>{thread.timestamp}</Text>
+                  </View>
+                  <Text style={styles.context}>{thread.context}</Text>
+                  <Text numberOfLines={1} style={styles.preview}>
+                    {thread.preview}
+                  </Text>
+                </View>
+                {thread.unread ? <UnreadBadge count={thread.unread} /> : null}
+              </Pressable>
+            ))}
       </View>
     </Screen>
+  );
+}
+
+function LiveThread({ item, onPress }: { item: MessageThread; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityLabel={`${item.title}. ${item.latestBody}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
+      <View style={[styles.activityIcon, { backgroundColor: item.activity.color }]}>
+        <Text style={styles.emoji}>{item.activity.emoji}</Text>
+      </View>
+      <View style={styles.threadContent}>
+        <View style={styles.threadHeading}>
+          <Text numberOfLines={1} style={styles.threadName}>
+            {item.title}
+          </Text>
+          <Text style={styles.timestamp}>{messageTimestamp(item.latestAt)}</Text>
+        </View>
+        <Text style={styles.context}>
+          {item.contextLabel} · {item.status.replaceAll('_', ' ')}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={[styles.preview, item.unreadCount > 0 && styles.unreadPreview]}>
+          {item.latestBody}
+        </Text>
+      </View>
+      {item.unreadCount ? <UnreadBadge count={item.unreadCount} /> : null}
+    </Pressable>
+  );
+}
+
+function UnreadBadge({ count }: { count: number }) {
+  return (
+    <View style={styles.unread}>
+      <Text style={styles.unreadText}>{count > 99 ? '99+' : count}</Text>
+    </View>
   );
 }
 
@@ -116,6 +206,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  error: { marginTop: spacing.md, color: colors.error, fontSize: 12, textAlign: 'center' },
+  loading: { alignItems: 'center', gap: 9, marginTop: spacing.xl },
+  muted: { color: colors.muted, fontSize: 11 },
   list: {
     marginTop: spacing.md,
   },
@@ -131,6 +224,14 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.76,
   },
+  activityIcon: {
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
+  },
+  emoji: { fontSize: 25 },
   threadContent: {
     flex: 1,
     gap: 2,
@@ -154,12 +255,14 @@ const styles = StyleSheet.create({
     color: colors.orangeDark,
     fontSize: 11,
     fontWeight: '800',
+    textTransform: 'capitalize',
   },
   preview: {
     color: colors.muted,
     fontSize: 13,
     lineHeight: 18,
   },
+  unreadPreview: { color: colors.ink, fontWeight: '700' },
   unread: {
     minWidth: 23,
     height: 23,
@@ -167,10 +270,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     backgroundColor: colors.orange,
+    paddingHorizontal: 5,
   },
   unreadText: {
     color: colors.white,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
   },
 });

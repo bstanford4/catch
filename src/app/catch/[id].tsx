@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -33,6 +33,7 @@ export default function CatchDetailsScreen() {
 }
 
 function LiveCatchDetails({ id }: { id: string }) {
+  const router = useRouter();
   const { session } = useAuth();
   const [item, setItem] = useState<HostedCatch | null>(null);
   const [request, setRequest] = useState<JoinRequest | null>(null);
@@ -281,6 +282,21 @@ function LiveCatchDetails({ id }: { id: string }) {
       ) : null}
       {isHost ? (
         <Text style={styles.approved}>You are hosting this Catch. Manage requests from My Catches.</Text>
+      ) : null}
+      {isHost || approved ? (
+        <View style={styles.requestBox}>
+          <Button
+            icon="chatbubble-ellipses-outline"
+            label="Open Catch chat"
+            onPress={() =>
+              router.push({
+                pathname: '/message/[type]/[id]',
+                params: { id, type: 'catch' },
+              })
+            }
+            variant="secondary"
+          />
+        </View>
       ) : null}
       <Text style={styles.footerNote}>You can leave, block, or report at any time.</Text>
     </Screen>

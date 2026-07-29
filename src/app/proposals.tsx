@@ -109,6 +109,12 @@ export default function ProposalsScreen() {
               onDecline={
                 item.direction === 'received' ? () => decide(item, false) : undefined
               }
+              onMessage={() =>
+                router.push({
+                  pathname: '/message/[type]/[id]',
+                  params: { id: item.id, type: 'proposal' },
+                })
+              }
               onWithdraw={item.direction === 'sent' ? () => withdraw(item) : undefined}
             />
           ))}
@@ -143,6 +149,7 @@ function ProposalCard({
   item,
   onAccept,
   onDecline,
+  onMessage,
   onView,
   onWithdraw,
 }: {
@@ -150,6 +157,7 @@ function ProposalCard({
   item: DirectCatchProposal;
   onAccept?: () => void;
   onDecline?: () => void;
+  onMessage?: () => void;
   onView?: () => void;
   onWithdraw?: () => void;
 }) {
@@ -204,6 +212,14 @@ function ProposalCard({
         {onWithdraw ? (
           <Pressable disabled={busy} onPress={onWithdraw} style={styles.withdrawButton}>
             <Text style={styles.declineText}>{busy ? 'Withdrawing...' : 'Withdraw proposal'}</Text>
+          </Pressable>
+        ) : null}
+        {onMessage ? (
+          <Pressable
+            onPress={onMessage}
+            style={({ pressed }) => [styles.messageButton, pressed && styles.pressed]}>
+            <Ionicons color={colors.forest} name="chatbubble-ellipses-outline" size={16} />
+            <Text style={styles.messageButtonText}>Message {item.otherFirstName}</Text>
           </Pressable>
         ) : null}
         {onView ? (
@@ -279,6 +295,16 @@ const styles = StyleSheet.create({
   },
   acceptText: { color: colors.white, fontSize: 12, fontWeight: '800' },
   withdrawButton: { alignItems: 'center', minHeight: 38, justifyContent: 'center' },
+  messageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    minHeight: 42,
+    borderRadius: 13,
+    backgroundColor: colors.paleGreen,
+  },
+  messageButtonText: { color: colors.forest, fontSize: 11, fontWeight: '900' },
   viewButton: {
     flexDirection: 'row',
     alignItems: 'center',

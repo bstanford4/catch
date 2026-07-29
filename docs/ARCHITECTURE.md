@@ -113,7 +113,7 @@ Coordination:
 - `catch_mates` and `catch_mate_invites` — one-way saved connections and
   single-use private friend codes; profile joins are exposed only through
   authorization-checked functions.
-- `catch_messages` and `catch_status_history`.
+- `catch_messages`, `message_thread_reads`, and `catch_status_history`.
 - `invite_links`.
 
 Trust and operations:
@@ -160,6 +160,9 @@ Participant:
 - Catch hosts can mutate their catch and resolve its pending join requests.
 - Confirmed participants can read their catch messages and authorized private
   location material.
+- Proposal messages are limited to the sender and recipient. Catch messages are
+  limited to the host and approved/attended participants, with blocks enforced
+  in either direction.
 - A block in either direction removes discovery, profile, proposal, join, and
   messaging access.
 - Reports are insertable by the reporter but readable only by that reporter and

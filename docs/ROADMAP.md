@@ -63,8 +63,9 @@ invitations, and device push delivery.
 
 ### Phase 6 — messages and notifications
 
-Realtime proposal/catch threads, system messages, push token lifecycle,
-notification preferences, deep links, and privacy-safe notification copy.
+Realtime proposal/Catch threads, unread state, and contextual system messages
+are implemented. Remaining work is push token lifecycle, editable notification
+preferences, deep links from device notifications, and privacy-safe push copy.
 
 ### Phase 7 — completion and reputation
 
@@ -110,17 +111,18 @@ justify one.
 ## Known limitations
 
 - Phase 1 data is local and fictional.
-- Authentication, initial profile onboarding, availability, equipment, and
-  private equipment-photo uploads are connected when Supabase credentials and
-  migrations are configured. Catch Now and scheduled Catch creation and host
-  management are also connected. Profile photos, account deletion, and Open to
-  Catch publishing remain deferred.
+- Authentication, initial profile onboarding, availability, equipment, private
+  equipment-photo uploads, Catch creation/management, Open to Catch matching,
+  and contextual messaging are connected when Supabase credentials and
+  migrations are configured. Profile photos and account deletion remain
+  deferred.
 - The private-spot form accepts an exact address or meeting instructions and the
   database supports encrypted coordinates, but the visual drop-pin picker and
   geocoding wait on a production map provider.
 - Discovery currently filters by broad visibility and time, not geographic
   distance; the "within 10 miles" label remains aspirational until safe PostGIS
   radius queries are connected.
-- Map, push, realtime, and moderation operations are interfaces or schema
-  foundations, not production integrations.
+- Map, push, and moderation operations are interfaces or schema foundations, not
+  production integrations. Realtime is currently limited to active message
+  threads.
 - Native device and app-store validation require external accounts and hardware.
