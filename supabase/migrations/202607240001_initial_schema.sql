@@ -1,5 +1,9 @@
-create extension if not exists pgcrypto;
-create extension if not exists postgis;
+create schema if not exists extensions;
+create schema if not exists gis;
+create extension if not exists pgcrypto with schema extensions;
+create extension if not exists postgis with schema gis;
+
+grant usage on schema gis to anon, authenticated, service_role;
 
 create type public.catch_kind as enum ('now', 'scheduled');
 create type public.catch_status as enum (
@@ -20,7 +24,7 @@ create table public.profiles (
   photo_path text,
   bio text check (char_length(bio) <= 500),
   area_label text not null,
-  coarse_location geography(point, 4326),
+  coarse_location gis.geography(point, 4326),
   age_18_affirmed_at timestamptz not null,
   age_21_affirmed_at timestamptz,
   preferred_radius_miles integer not null default 10 check (preferred_radius_miles between 1 and 100),
@@ -92,7 +96,7 @@ create table public.venues (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   area_label text not null,
-  public_location geography(point, 4326),
+  public_location gis.geography(point, 4326),
   address_display text,
   is_public boolean not null default true,
   created_by uuid references public.profiles(user_id),
@@ -128,7 +132,7 @@ create table public.catches (
   timezone text not null,
   venue_id uuid references public.venues(id),
   area_label text not null,
-  discovery_location geography(point, 4326),
+  discovery_location gis.geography(point, 4326),
   capacity integer not null check (capacity between 2 and 50),
   approval_required boolean not null default true,
   visibility text not null default 'public' check (visibility in ('public', 'unlisted', 'invite_only')),
@@ -178,7 +182,7 @@ create table public.open_to_catch_listings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(user_id) on delete cascade,
   area_label text not null,
-  discovery_location geography(point, 4326),
+  discovery_location gis.geography(point, 4326),
   radius_miles integer not null check (radius_miles between 1 and 100),
   broad_availability text not null,
   preferred_duration_minutes integer,
@@ -498,4 +502,3 @@ to authenticated;
 grant select, insert on public.reports to authenticated;
 grant all privileges on all tables in schema public to service_role;
 grant usage, select on all sequences in schema public to service_role;
-

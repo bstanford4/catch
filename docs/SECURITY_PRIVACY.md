@@ -44,9 +44,22 @@ additional local setup and careful safe-view design; it is justified because
 distance discovery is core. Coarse search points should be deliberately rounded
 or snapped before storage.
 
+The prototype installed PostGIS in `public`. Its `spatial_ref_sys` reference
+catalog and extension functions are owned by Supabase's administrative role, so
+the project SQL Editor cannot change their RLS or execution grants. The
+project-owned automatic-RLS event function has client execution revoked. Moving
+or hardening PostGIS requires Supabase Support or a pre-production database
+backup and dependency rebuild; it must not be attempted as an in-place schema
+move.
+
 ## Authentication and secrets
 
 - Supabase manages passwords and sessions.
+- Email confirmation and secure email changes are enabled.
+- Password changes require a recent login and the current password.
+- New passwords require at least eight characters.
+- Supabase's leaked-password screening remains unavailable on the Free plan and
+  should be enabled when the project moves to Pro.
 - The mobile client uses only the publishable project key.
 - Session persistence uses a supported native storage adapter; production can
   move refresh-token storage to SecureStore if the Supabase adapter contract permits.

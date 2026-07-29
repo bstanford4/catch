@@ -45,21 +45,21 @@ values
   (
     'Embrey Mill Park',
     'North Stafford',
-    st_setsrid(st_makepoint(-77.414, 38.467), 4326)::geography,
+    gis.st_setsrid(gis.st_makepoint(-77.414, 38.467), 4326)::gis.geography,
     'North Stafford public park',
     true
   ),
   (
     'Smith Lake Field',
     'Stafford',
-    st_setsrid(st_makepoint(-77.43, 38.492), 4326)::geography,
+    gis.st_setsrid(gis.st_makepoint(-77.43, 38.492), 4326)::gis.geography,
     'Stafford public recreation area',
     true
   ),
   (
     'Willowmere Courts',
     'Garrisonville',
-    st_setsrid(st_makepoint(-77.444, 38.472), 4326)::geography,
+    gis.st_setsrid(gis.st_makepoint(-77.444, 38.472), 4326)::gis.geography,
     'Fictional public court complex',
     true
   )
