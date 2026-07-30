@@ -18,6 +18,7 @@ import {
   redeemCatchMateInvite,
   removeCatchMate,
 } from '@/services/catch-mate-service';
+import { startDirectMessage } from '@/services/messaging-service';
 
 export default function CatchMatesScreen() {
   const router = useRouter();
@@ -105,6 +106,21 @@ export default function CatchMatesScreen() {
       return;
     }
     setMates((current) => current.filter((item) => item.id !== mate.id));
+  }
+
+  async function message(mate: SavedCatchMate) {
+    setIsSaving(true);
+    setError('');
+    const result = await startDirectMessage(mate.id);
+    setIsSaving(false);
+    if (result.error || !result.data) {
+      setError(result.error ?? 'The private conversation could not be opened.');
+      return;
+    }
+    router.push({
+      pathname: '/message/[type]/[id]',
+      params: { id: result.data, type: 'direct' },
+    });
   }
 
   return (
@@ -218,6 +234,14 @@ export default function CatchMatesScreen() {
                 </Text>
               </View>
               <View style={styles.mateActions}>
+                <Pressable
+                  accessibilityLabel={`Message ${mate.firstName}`}
+                  disabled={isSaving}
+                  onPress={() => message(mate)}
+                  style={({ pressed }) => [styles.messageButton, pressed && styles.pressed]}>
+                  <Ionicons color={colors.forest} name="chatbubble-outline" size={16} />
+                  <Text style={styles.messageText}>Message</Text>
+                </Pressable>
                 <Pressable
                   accessibilityLabel={`Propose a Catch with ${mate.firstName}`}
                   onPress={() =>
@@ -371,6 +395,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   proposeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
+  messageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 36,
+    borderWidth: 1,
+    borderColor: colors.forest,
+    borderRadius: 12,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 9,
+  },
+  messageText: { color: colors.forest, fontSize: 10, fontWeight: '800' },
   removeButton: { alignItems: 'center', paddingVertical: 6 },
   removeText: { color: colors.error, fontSize: 9, fontWeight: '800' },
   pressed: { opacity: 0.75 },

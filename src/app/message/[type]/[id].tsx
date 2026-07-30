@@ -35,7 +35,8 @@ import {
 export default function MessageThreadScreen() {
   const params = useLocalSearchParams<{ id: string; type: MessageThreadType }>();
   const id = params.id ?? '';
-  const type = params.type === 'proposal' ? 'proposal' : 'catch';
+  const type =
+    params.type === 'proposal' ? 'proposal' : params.type === 'direct' ? 'direct' : 'catch';
   const [thread, setThread] = useState<MessageThread | null>(null);
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -111,15 +112,19 @@ export default function MessageThreadScreen() {
     );
   }
 
-  const start = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(thread.startsAt));
+  const start = thread.startsAt
+    ? new Intl.DateTimeFormat('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(new Date(thread.startsAt))
+    : '';
   const people =
-    thread.type === 'proposal'
+    thread.type === 'direct'
+      ? `Private conversation with ${thread.otherFirstName}`
+      : thread.type === 'proposal'
       ? `With ${thread.otherFirstName}`
       : conversationPeopleLabel(thread.otherFirstName);
 
@@ -136,7 +141,9 @@ export default function MessageThreadScreen() {
             <Text style={styles.eyebrow}>{thread.contextLabel.toUpperCase()}</Text>
             <Text style={styles.title}>{thread.title}</Text>
             <Text style={styles.contextMeta}>
-              {people} · {start} · {thread.status.replaceAll('_', ' ')}
+              {thread.type === 'direct'
+                ? people
+                : `${people} · ${start} · ${thread.status.replaceAll('_', ' ')}`}
             </Text>
           </View>
         </View>
@@ -144,7 +151,9 @@ export default function MessageThreadScreen() {
         <View style={styles.privacyNotice}>
           <Ionicons color={colors.forest} name="shield-checkmark" size={18} />
           <Text style={styles.privacyText}>
-            Keep exact private locations inside this approved conversation.
+            {thread.type === 'direct'
+              ? 'Only connected Catch members can use this private conversation.'
+              : 'Keep exact private locations inside this approved conversation.'}
           </Text>
         </View>
 
@@ -168,7 +177,11 @@ export default function MessageThreadScreen() {
               maxLength={2000}
               multiline
               onChangeText={setDraft}
-              placeholder="Message the Catch crew"
+              placeholder={
+                thread.type === 'direct'
+                  ? `Message ${thread.otherFirstName}`
+                  : 'Message the Catch crew'
+              }
               placeholderTextColor={colors.muted}
               style={styles.input}
               value={draft}
@@ -193,7 +206,13 @@ export default function MessageThreadScreen() {
           <View style={styles.closed}>
             <Ionicons color={colors.muted} name="lock-closed-outline" size={17} />
             <Text style={styles.closedText}>
-              This {thread.type === 'proposal' ? 'proposal' : 'Catch'} conversation is closed.
+              This{' '}
+              {thread.type === 'proposal'
+                ? 'proposal'
+                : thread.type === 'direct'
+                  ? 'direct'
+                  : 'Catch'}{' '}
+              conversation is closed.
             </Text>
           </View>
         )}

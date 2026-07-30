@@ -65,7 +65,9 @@ export default function MessagesScreen() {
 
       <View style={styles.notice}>
         <Ionicons color={colors.orangeDark} name="lock-closed" size={17} />
-        <Text style={styles.noticeText}>Chat stays attached to a proposal or Catch.</Text>
+        <Text style={styles.noticeText}>
+          Catch chats and Catch Mate messages stay private.
+        </Text>
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -80,7 +82,7 @@ export default function MessagesScreen() {
         {session && !isLoading && threads.length === 0 ? (
           <StatePanel
             action="View Catch proposals"
-            body="Send a proposal or join a Catch. Its private conversation will appear here."
+            body="Message a Catch Mate, send a proposal, or join a Catch. The conversation will appear here."
             icon="chatbubble-ellipses-outline"
             onAction={() => router.push('/proposals')}
             title="No conversations yet"
@@ -130,11 +132,40 @@ export default function MessagesScreen() {
 }
 
 function LiveThread({ item, onPress }: { item: MessageThread; onPress: () => void }) {
+  if (item.type === 'direct') {
+    return (
+      <Pressable
+        accessibilityLabel={`Private conversation with ${item.otherFirstName}. ${item.latestBody}`}
+        onPress={onPress}
+        style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
+        <Avatar
+          initials={item.otherFirstName.slice(0, 2).toUpperCase()}
+          size={52}
+          tone="green"
+        />
+        <View style={styles.threadContent}>
+          <View style={styles.threadHeading}>
+            <Text numberOfLines={1} style={styles.threadName}>
+              {item.otherFirstName}
+            </Text>
+            <Text style={styles.timestamp}>{messageTimestamp(item.latestAt)}</Text>
+          </View>
+          <Text style={styles.context}>Catch Mate · Private message</Text>
+          <Text
+            numberOfLines={1}
+            style={[styles.preview, item.unreadCount > 0 && styles.unreadPreview]}>
+            {item.latestBody}
+          </Text>
+        </View>
+        {item.unreadCount ? <UnreadBadge count={item.unreadCount} /> : null}
+      </Pressable>
+    );
+  }
   const people =
     item.type === 'proposal'
       ? `With ${item.otherFirstName}`
       : conversationPeopleLabel(item.otherFirstName);
-  const plan = catchPlanTimestamp(item.startsAt);
+  const plan = catchPlanTimestamp(item.startsAt ?? item.latestAt);
   return (
     <Pressable
       accessibilityLabel={`${item.title}. ${people}. ${plan}. ${item.latestBody}`}

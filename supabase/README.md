@@ -37,15 +37,19 @@ The local Expo demo does not require Supabase. To enable the backend:
     `migrations/202607290011_conversation_context_and_catch_expiration.sql`
     once. It enables Supabase Cron, marks old open/full Catches expired every
     five minutes, and closes their conversations without sending a routine push.
-14. Run `seed.sql` for catalog and public-venue demo records.
-15. Copy `.env.example` to `.env` and add the project URL and client-safe
-   publishable key.
-16. Add `catch://**` to the project's Auth redirect URLs.
-17. Link the app to Expo EAS, put its project ID in
+14. Run `migrations/202607290012_safe_direct_messages.sql` once. It adds
+    one-to-one messages for Catch Mates and members of a shared approved Catch,
+    with mutual block enforcement, unread state, Realtime updates, and push
+    notifications.
+15. Run `seed.sql` for catalog and public-venue demo records.
+16. Copy `.env.example` to `.env` and add the project URL and client-safe
+    publishable key.
+17. Add `catch://**` to the project's Auth redirect URLs.
+18. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-18. Restart Expo so client environment variables are rebundled.
+19. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 
