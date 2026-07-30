@@ -36,3 +36,20 @@ export function messageTimestamp(value: string, now = new Date()) {
   }).format(date);
 }
 
+export function catchPlanTimestamp(value: string, timeZone?: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    ...(timeZone ? { timeZone } : {}),
+  }).format(new Date(value));
+}
+
+export function conversationPeopleLabel(otherFirstName: string) {
+  const normalized = otherFirstName.trim();
+  return !normalized || normalized === 'Catch crew'
+    ? 'No catcher joined yet'
+    : `With ${normalized}`;
+}

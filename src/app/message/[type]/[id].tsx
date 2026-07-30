@@ -16,7 +16,11 @@ import {
 import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, spacing } from '@/constants/theme';
-import { messageTimestamp, validateMessageBody } from '@/services/message-utils';
+import {
+  conversationPeopleLabel,
+  messageTimestamp,
+  validateMessageBody,
+} from '@/services/message-utils';
 import {
   type MessageThread,
   type MessageThreadType,
@@ -114,6 +118,10 @@ export default function MessageThreadScreen() {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(thread.startsAt));
+  const people =
+    thread.type === 'proposal'
+      ? `With ${thread.otherFirstName}`
+      : conversationPeopleLabel(thread.otherFirstName);
 
   return (
     <KeyboardAvoidingView
@@ -128,7 +136,7 @@ export default function MessageThreadScreen() {
             <Text style={styles.eyebrow}>{thread.contextLabel.toUpperCase()}</Text>
             <Text style={styles.title}>{thread.title}</Text>
             <Text style={styles.contextMeta}>
-              {start} · {thread.status.replaceAll('_', ' ')}
+              {people} · {start} · {thread.status.replaceAll('_', ' ')}
             </Text>
           </View>
         </View>

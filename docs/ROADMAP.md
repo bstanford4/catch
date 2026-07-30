@@ -48,7 +48,8 @@ urgent preset rather than a separate workflow.
 Hosts can also enter a custom activity, exact date/time, duration, or unlisted
 public place/general area. Remaining work is activity-specific metadata beyond
 the custom label, shared venue submission and geocoding, and cancellation audit
-events.
+events. Open and full Catches now expire automatically after their scheduled
+duration; confirmed Catches remain available for the future completion flow.
 
 ### Phase 5 — discovery and proposals
 
@@ -66,8 +67,9 @@ invitations, and push-delivery operations.
 Realtime proposal/Catch threads, unread state, and contextual system messages
 are implemented. Editable notification preferences, native Expo token
 registration/revocation, preference-aware database event delivery, safe deep
-links, and privacy-safe lock-screen copy are implemented. Remaining work is EAS
-credential provisioning, native-device validation, Expo receipt processing,
+links, privacy-safe lock-screen copy, participant/date context in the inbox, and
+automatic closing of expired Catch threads are implemented. Remaining work is
+EAS credential provisioning, native-device validation, Expo receipt processing,
 stale-token cleanup, and notification analytics.
 
 ### Phase 7 — completion and reputation

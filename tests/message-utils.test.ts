@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  catchPlanTimestamp,
+  conversationPeopleLabel,
   messageTimestamp,
   normalizeMessageBody,
   validateMessageBody,
@@ -32,5 +34,23 @@ describe('message timestamps', () => {
   it('uses friendly labels for earlier messages', () => {
     expect(messageTimestamp('2026-07-27T18:15:00-04:00', now)).toBe('Yesterday');
     expect(messageTimestamp('2026-07-20T18:15:00-04:00', now)).toBe('Jul 20');
+  });
+});
+
+describe('conversation context', () => {
+  it('shows the other Catch participants when known', () => {
+    expect(conversationPeopleLabel('John')).toBe('With John');
+    expect(conversationPeopleLabel('John, Ben')).toBe('With John, Ben');
+  });
+
+  it('does not imply another catcher has joined an empty host thread', () => {
+    expect(conversationPeopleLabel('Catch crew')).toBe('No catcher joined yet');
+    expect(conversationPeopleLabel('')).toBe('No catcher joined yet');
+  });
+
+  it('formats the Catch plan separately from the latest-message time', () => {
+    expect(
+      catchPlanTimestamp('2026-07-29T22:00:00.000Z', 'America/New_York'),
+    ).toBe('Wed, Jul 29, 6:00 PM');
   });
 });

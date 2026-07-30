@@ -9,7 +9,11 @@ import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, spacing } from '@/constants/theme';
 import { messageThreads } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
-import { messageTimestamp } from '@/services/message-utils';
+import {
+  catchPlanTimestamp,
+  conversationPeopleLabel,
+  messageTimestamp,
+} from '@/services/message-utils';
 import {
   type MessageThread,
   listMessageThreads,
@@ -126,9 +130,14 @@ export default function MessagesScreen() {
 }
 
 function LiveThread({ item, onPress }: { item: MessageThread; onPress: () => void }) {
+  const people =
+    item.type === 'proposal'
+      ? `With ${item.otherFirstName}`
+      : conversationPeopleLabel(item.otherFirstName);
+  const plan = catchPlanTimestamp(item.startsAt);
   return (
     <Pressable
-      accessibilityLabel={`${item.title}. ${item.latestBody}`}
+      accessibilityLabel={`${item.title}. ${people}. ${plan}. ${item.latestBody}`}
       onPress={onPress}
       style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
       <View style={[styles.activityIcon, { backgroundColor: item.activity.color }]}>
@@ -141,7 +150,10 @@ function LiveThread({ item, onPress }: { item: MessageThread; onPress: () => voi
           </Text>
           <Text style={styles.timestamp}>{messageTimestamp(item.latestAt)}</Text>
         </View>
-        <Text style={styles.context}>
+        <Text numberOfLines={1} style={styles.context}>
+          {people} · {plan}
+        </Text>
+        <Text style={styles.status}>
           {item.contextLabel} · {item.status.replaceAll('_', ' ')}
         </Text>
         <Text
@@ -216,7 +228,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 94,
+    minHeight: 108,
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
     paddingVertical: 15,
@@ -252,8 +264,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   context: {
-    color: colors.orangeDark,
+    color: colors.forest,
     fontSize: 11,
+    fontWeight: '700',
+  },
+  status: {
+    color: colors.orangeDark,
+    fontSize: 10,
     fontWeight: '800',
     textTransform: 'capitalize',
   },
