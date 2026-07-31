@@ -59,6 +59,7 @@ export default function RootLayout() {
           <Stack.Screen name="propose/[mateId]" options={{ title: 'Propose a Catch' }} />
           <Stack.Screen name="matches" options={{ title: 'Catches for you' }} />
           <Stack.Screen name="message/[type]/[id]" options={{ title: 'Conversation' }} />
+          <Stack.Screen name="member/[id]" options={{ title: 'Participant profile' }} />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>

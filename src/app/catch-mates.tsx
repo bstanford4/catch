@@ -223,16 +223,28 @@ export default function CatchMatesScreen() {
           </View>
           {mates.map((mate) => (
             <View key={mate.id} style={styles.mateCard}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{mate.firstName.slice(0, 2).toUpperCase()}</Text>
-              </View>
-              <View style={styles.mateBody}>
-                <Text style={styles.mateName}>{mate.firstName}</Text>
-                <Text style={styles.muted}>{mate.areaLabel}</Text>
-                <Text style={styles.source}>
-                  {mate.source === 'friend_code' ? 'KNOWN FRIEND' : 'SHARED CATCH'}
-                </Text>
-              </View>
+              <Pressable
+                accessibilityLabel={`View ${mate.firstName}'s participant profile`}
+                onPress={() =>
+                  router.push({
+                    pathname: '/member/[id]',
+                    params: { id: mate.id },
+                  })
+                }
+                style={({ pressed }) => [styles.mateIdentity, pressed && styles.pressed]}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {mate.firstName.slice(0, 2).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.mateBody}>
+                  <Text style={styles.mateName}>{mate.firstName}</Text>
+                  <Text style={styles.muted}>{mate.areaLabel}</Text>
+                  <Text style={styles.source}>
+                    {mate.source === 'friend_code' ? 'KNOWN FRIEND' : 'SHARED CATCH'} · VIEW PROFILE
+                  </Text>
+                </View>
+              </Pressable>
               <View style={styles.mateActions}>
                 <Pressable
                   accessibilityLabel={`Message ${mate.firstName}`}
@@ -370,6 +382,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.paper,
     padding: 13,
+  },
+  mateIdentity: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
   },
   avatar: {
     width: 49,

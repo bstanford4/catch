@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -34,6 +34,7 @@ import {
 
 export default function MessageThreadScreen() {
   const params = useLocalSearchParams<{ id: string; type: MessageThreadType }>();
+  const router = useRouter();
   const id = params.id ?? '';
   const type =
     params.type === 'proposal' ? 'proposal' : params.type === 'direct' ? 'direct' : 'catch';
@@ -133,7 +134,25 @@ export default function MessageThreadScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.flex}>
       <Screen>
-        <View style={styles.contextCard}>
+        <Pressable
+          accessibilityLabel={
+            thread.type === 'direct'
+              ? `View ${thread.otherFirstName}'s participant profile`
+              : undefined
+          }
+          disabled={thread.type !== 'direct'}
+          onPress={() =>
+            router.push({
+              pathname: '/member/[id]',
+              params: {
+                id:
+                  thread.type === 'direct'
+                    ? thread.otherUserId ?? ''
+                    : '',
+              },
+            })
+          }
+          style={({ pressed }) => [styles.contextCard, pressed && styles.pressed]}>
           <View style={[styles.activityIcon, { backgroundColor: thread.activity.color }]}>
             <Text style={styles.emoji}>{thread.activity.emoji}</Text>
           </View>
@@ -146,7 +165,10 @@ export default function MessageThreadScreen() {
                 : `${people} · ${start} · ${thread.status.replaceAll('_', ' ')}`}
             </Text>
           </View>
-        </View>
+          {thread.type === 'direct' ? (
+            <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+          ) : null}
+        </Pressable>
 
         <View style={styles.privacyNotice}>
           <Ionicons color={colors.forest} name="shield-checkmark" size={18} />

@@ -64,8 +64,9 @@ invitations, and push-delivery operations.
 
 ### Phase 6 — messages and notifications
 
-Realtime proposal/Catch threads, safe one-to-one Catch Mate messages, unread
-state, and contextual system messages are implemented. Editable notification
+Realtime proposal/Catch threads, safe one-to-one Catch Mate messages,
+privacy-scoped participant profiles, unread state, and contextual system
+messages are implemented. Editable notification
 preferences, native Expo token
 registration/revocation, preference-aware database event delivery, safe deep
 links, privacy-safe lock-screen copy, participant/date context in the inbox, and

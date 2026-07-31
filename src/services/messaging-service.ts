@@ -17,6 +17,7 @@ export type MessageThread = {
   latestAt: string;
   latestBody: string;
   otherFirstName: string;
+  otherUserId: string | null;
   startsAt: string | null;
   status: string;
   title: string;
@@ -87,6 +88,7 @@ export async function listMessageThreads() {
     latestAt: row.latest_at,
     latestBody: row.latest_body,
     otherFirstName: row.other_first_name,
+    otherUserId: null,
     startsAt: row.starts_at,
     status: row.status,
     title: row.title,
@@ -106,6 +108,7 @@ export async function listMessageThreads() {
     latestAt: row.latest_at,
     latestBody: row.latest_body,
     otherFirstName: row.other_first_name,
+    otherUserId: row.other_user_id,
     startsAt: null,
     status: 'private chat',
     title: row.other_first_name,

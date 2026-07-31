@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -18,6 +18,7 @@ import {
 
 export default function CatchRequestsScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { session } = useAuth();
   const [catchItem, setCatchItem] = useState<HostedCatch | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
@@ -130,6 +131,15 @@ export default function CatchRequestsScreen() {
                   ? () => saveMate(request)
                   : undefined
               }
+              onProfile={
+                request.status === 'approved'
+                  ? () =>
+                      router.push({
+                        pathname: '/member/[id]',
+                        params: { id: request.requesterId },
+                      })
+                  : undefined
+              }
               request={request}
               saved={savedMateIds.includes(request.requesterId)}
             />
@@ -144,6 +154,7 @@ function RequestCard({
   busy = false,
   onApprove,
   onDecline,
+  onProfile,
   onSave,
   request,
   saved = false,
@@ -151,6 +162,7 @@ function RequestCard({
   busy?: boolean;
   onApprove?: () => void;
   onDecline?: () => void;
+  onProfile?: () => void;
   onSave?: () => void;
   request: JoinRequest;
   saved?: boolean;
@@ -165,6 +177,15 @@ function RequestCard({
           <Text style={styles.status}>{request.status.toUpperCase()}</Text>
         </View>
         <Text style={styles.muted}>{request.message || 'No message included.'}</Text>
+        {onProfile ? (
+          <Pressable
+            accessibilityLabel={`View ${request.requesterFirstName}'s participant profile`}
+            onPress={onProfile}
+            style={({ pressed }) => [styles.profileLink, pressed && styles.pressed]}>
+            <Ionicons color={colors.forest} name="person-circle-outline" size={17} />
+            <Text style={styles.profileLinkText}>View participant profile</Text>
+          </Pressable>
+        ) : null}
         {onApprove && onDecline ? (
           <View style={styles.actions}>
             <Pressable
@@ -245,6 +266,8 @@ const styles = StyleSheet.create({
   status: { color: colors.forest, fontSize: 8, fontWeight: '900' },
   muted: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   actions: { flexDirection: 'row', gap: 9, marginTop: 4 },
+  profileLink: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 4 },
+  profileLinkText: { color: colors.forest, fontSize: 11, fontWeight: '800' },
   decline: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 42 },
   declineText: { color: colors.error, fontSize: 12, fontWeight: '800' },
   approve: {

@@ -3,7 +3,15 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { catchLocationLabel } from '@/components/hosted-catch-card';
 import { Avatar } from '@/components/ui/avatar';
@@ -24,6 +32,10 @@ import {
   requestToJoin,
   withdrawJoinRequest,
 } from '@/services/catch-service';
+import {
+  type CatchParticipant,
+  listCatchParticipants,
+} from '@/services/participant-profile-service';
 
 export default function CatchDetailsScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +50,7 @@ function LiveCatchDetails({ id }: { id: string }) {
   const [item, setItem] = useState<HostedCatch | null>(null);
   const [request, setRequest] = useState<JoinRequest | null>(null);
   const [privateLocation, setPrivateLocation] = useState<PrivateCatchLocation | null>(null);
+  const [participants, setParticipants] = useState<CatchParticipant[]>([]);
   const [message, setMessage] = useState('');
   const [mateSaved, setMateSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +74,12 @@ function LiveCatchDetails({ id }: { id: string }) {
       setError(catchResult.error ?? requestResult.error ?? '');
       const maySeePrivate =
         catchResult.data?.hostId === session.user.id || requestResult.data?.status === 'approved';
+      if (maySeePrivate) {
+        const participantResult = await listCatchParticipants(id);
+        if (!active) return;
+        setParticipants(participantResult.data);
+        if (participantResult.error) setError(participantResult.error);
+      }
       if (maySeePrivate && catchResult.data?.locationType === 'private') {
         const locationResult = await getPrivateCatchLocation(id);
         if (!active) return;
@@ -98,6 +117,10 @@ function LiveCatchDetails({ id }: { id: string }) {
     if (refreshed?.data?.status === 'approved' && item?.locationType === 'private') {
       const locationResult = await getPrivateCatchLocation(id);
       setPrivateLocation(locationResult.data);
+    }
+    if (refreshed?.data?.status === 'approved') {
+      const participantResult = await listCatchParticipants(id);
+      setParticipants(participantResult.data);
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
@@ -182,13 +205,31 @@ function LiveCatchDetails({ id }: { id: string }) {
         <Text style={styles.subtype}>{item.intensity}</Text>
       </LinearGradient>
 
-      <View style={styles.hostRow}>
+      <Pressable
+        accessibilityLabel={
+          approved && !isHost ? `View ${item.hostFirstName}'s participant profile` : undefined
+        }
+        disabled={!approved || isHost}
+        onPress={() =>
+          router.push({
+            pathname: '/member/[id]',
+            params: { id: item.hostId },
+          })
+        }
+        style={({ pressed }) => [styles.hostRow, pressed && styles.pressed]}>
         <Avatar initials={item.hostFirstName.slice(0, 2).toUpperCase()} size={52} tone="gold" />
         <View style={styles.hostText}>
           <Text style={styles.hostName}>{item.hostFirstName} is hosting</Text>
-          <Text style={styles.muted}>Approval protects private meeting details.</Text>
+          <Text style={styles.muted}>
+            {approved && !isHost
+              ? 'Tap to view participant profile.'
+              : 'Approval protects private meeting details.'}
+          </Text>
         </View>
-      </View>
+        {approved && !isHost ? (
+          <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+        ) : null}
+      </Pressable>
 
       <View style={styles.detailCard}>
         <Detail icon="time-outline" label="When" value={`${start} · ${item.durationMinutes} min`} />
@@ -211,6 +252,42 @@ function LiveCatchDetails({ id }: { id: string }) {
         <Text style={styles.sectionTitle}>The plan</Text>
         <Text style={styles.description}>{item.description || 'A casual Catch with the details above.'}</Text>
       </View>
+
+      {(isHost || approved) && participants.filter((person) => person.role !== 'host').length ? (
+        <View style={styles.about}>
+          <Text style={styles.sectionTitle}>Catch crew</Text>
+          <Text style={styles.crewHelper}>Approved participants only.</Text>
+          <View style={styles.crewList}>
+            {participants
+              .filter((person) => person.role !== 'host')
+              .map((person) => (
+                <Pressable
+                  accessibilityLabel={`View ${person.firstName}'s participant profile`}
+                  key={person.userId}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/member/[id]',
+                      params: { id: person.userId },
+                    })
+                  }
+                  style={({ pressed }) => [styles.crewRow, pressed && styles.pressed]}>
+                  <Avatar
+                    initials={person.firstName.slice(0, 2).toUpperCase()}
+                    size={42}
+                    tone="green"
+                  />
+                  <View style={styles.crewBody}>
+                    <Text style={styles.crewName}>{person.firstName}</Text>
+                    <Text style={styles.muted}>
+                      {person.isCatchMate ? 'Catch Mate' : 'Approved participant'}
+                    </Text>
+                  </View>
+                  <Ionicons color={colors.muted} name="chevron-forward" size={19} />
+                </Pressable>
+              ))}
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.privacy}>
         <Ionicons color={colors.forest} name="shield-checkmark" size={21} />
@@ -390,6 +467,7 @@ const styles = StyleSheet.create({
   hostText: { flex: 1, gap: 3 },
   hostName: { color: colors.ink, fontSize: 16, fontWeight: '800' },
   muted: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+  pressed: { opacity: 0.75 },
   detailCard: {
     gap: 15,
     marginTop: spacing.lg,
@@ -414,6 +492,20 @@ const styles = StyleSheet.create({
   about: { marginTop: spacing.lg, gap: 6 },
   sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800' },
   description: { color: colors.muted, fontSize: 14, lineHeight: 21 },
+  crewHelper: { color: colors.muted, fontSize: 10 },
+  crewList: { gap: 8, marginTop: 5 },
+  crewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    padding: 10,
+  },
+  crewBody: { flex: 1 },
+  crewName: { color: colors.ink, fontSize: 14, fontWeight: '800' },
   privacy: {
     flexDirection: 'row',
     alignItems: 'flex-start',
