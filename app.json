@@ -31,8 +31,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Catch uses your selected photos to show sporting equipment on your profile.",
-          "cameraPermission": "Catch uses the camera when you choose to photograph sporting equipment.",
+          "photosPermission": "Catch uses photos you select for your profile and sporting equipment.",
+          "cameraPermission": "Catch uses the camera when you choose to photograph yourself or sporting equipment.",
           "microphonePermission": false
         }
       ],

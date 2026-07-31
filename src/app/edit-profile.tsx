@@ -59,14 +59,15 @@ export default function EditProfileScreen() {
         .order('sort_order'),
     ]).then(([profileResult, activityResult]) => {
       if (!active) return;
-      if (profileResult.error || !profileResult.data) {
-        setError(profileResult.error ?? 'Your profile could not be loaded.');
-      } else {
+      if (profileResult.data) {
         setFirstName(profileResult.data.firstName);
         setBio(profileResult.data.bio);
         setSelectedSlugs(profileResult.data.activitySlugs);
         setPreviousPhotoPath(profileResult.data.photoPath);
         setExistingPhotoUrl(profileResult.data.photoUrl);
+      }
+      if (profileResult.error || !profileResult.data) {
+        setError(profileResult.error ?? 'Your profile could not be loaded.');
       }
       if (activityResult.error) {
         setError(activityResult.error.message);

@@ -28,6 +28,17 @@ export async function createProfilePhotoUrl(path: string | null) {
   return error ? null : (data?.signedUrl ?? null);
 }
 
+async function createOwnProfilePhotoUrl(path: string | null) {
+  if (!supabase || !path) return { url: null, error: null };
+  const { data, error } = await supabase.storage
+    .from('profile-photos')
+    .createSignedUrl(path, 3600);
+  return {
+    url: data?.signedUrl ?? null,
+    error: error?.message ?? (!data?.signedUrl ? 'No photo URL was returned.' : null),
+  };
+}
+
 export async function getMyEditableProfile(userId: string) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
   const [{ data: row, error }, { data: preferenceRows, error: preferenceError }] =
@@ -51,15 +62,18 @@ export async function getMyEditableProfile(userId: string) {
     : { data: [] as { slug: string }[], error: null };
   if (activityError) return { data: null, error: activityError.message };
 
+  const photo = await createOwnProfilePhotoUrl(row.photo_path);
   return {
     data: {
       activitySlugs: activityRows?.map((item) => item.slug) ?? [],
       bio: row.bio ?? '',
       firstName: row.first_name,
       photoPath: row.photo_path,
-      photoUrl: await createProfilePhotoUrl(row.photo_path),
+      photoUrl: photo.url,
     } satisfies EditableProfile,
-    error: null,
+    error: photo.error
+      ? `Your photo is saved, but it could not be displayed: ${photo.error}`
+      : null,
   };
 }
 
@@ -131,13 +145,21 @@ export async function updateMyProfile(input: UpdateProfileInput) {
     await supabase.storage.from('profile-photos').remove([input.previousPhotoPath]);
   }
 
+  const savedPhoto = await createOwnProfilePhotoUrl(photoPath);
+  if (savedPhoto.error) {
+    return {
+      data: null,
+      error: `Your profile was saved, but the photo could not be displayed: ${savedPhoto.error}`,
+    };
+  }
+
   return {
     data: {
       activitySlugs: input.activitySlugs,
       bio,
       firstName,
       photoPath,
-      photoUrl: await createProfilePhotoUrl(photoPath),
+      photoUrl: savedPhoto.url,
     } satisfies EditableProfile,
     error: null,
   };
