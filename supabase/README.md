@@ -45,15 +45,18 @@ The local Expo demo does not require Supabase. To enable the backend:
     privacy-scoped profiles and crew lists for approved Catch participants,
     including activities, recurring availability, and shareable-equipment
     labels without exposing email, age data, or exact locations.
-16. Run `seed.sql` for catalog and public-venue demo records.
-17. Copy `.env.example` to `.env` and add the project URL and client-safe
+16. Run `migrations/202607300014_editable_profile_photos.sql` once. It adds
+    atomic profile editing and a private profile-photo bucket. Photo reads are
+    limited to the owner, Catch Mates, and approved members of a shared Catch.
+17. Run `seed.sql` for catalog and public-venue demo records.
+18. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-18. Add `catch://**` to the project's Auth redirect URLs.
-19. Link the app to Expo EAS, put its project ID in
+19. Add `catch://**` to the project's Auth redirect URLs.
+20. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-20. Restart Expo so client environment variables are rebundled.
+21. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

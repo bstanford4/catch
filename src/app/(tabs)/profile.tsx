@@ -12,6 +12,7 @@ import { activities } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
 import { listAvailability } from '@/services/availability-service';
 import { listEquipment } from '@/services/equipment-service';
+import { getMyEditableProfile } from '@/services/profile-service';
 
 type Setting = {
   icon: ComponentProps<typeof Ionicons>['name'];
@@ -27,6 +28,7 @@ export default function ProfileScreen() {
   const { profile, session, signOut } = useAuth();
   const [equipmentDetail, setEquipmentDetail] = useState('Nothing added yet');
   const [availabilityDetail, setAvailabilityDetail] = useState('Not set yet');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const displayName = profile?.firstName ?? 'Blake';
   const initials =
     displayName
@@ -45,7 +47,8 @@ export default function ProfileScreen() {
       void Promise.all([
         listEquipment(session.user.id),
         listAvailability(session.user.id),
-      ]).then(([equipment, availability]) => {
+        getMyEditableProfile(session.user.id),
+      ]).then(([equipment, availability, editableProfile]) => {
         if (!active) return;
         if (!equipment.error) {
           const shareable = equipment.data.filter((item) => item.canShare).length;
@@ -68,6 +71,7 @@ export default function ProfileScreen() {
             days.length && timeWindows.length ? `${dayLabel} · ${timeLabel}` : 'Not set yet',
           );
         }
+        if (!editableProfile.error) setPhotoUrl(editableProfile.data?.photoUrl ?? null);
       });
       return () => {
         active = false;
@@ -77,7 +81,12 @@ export default function ProfileScreen() {
 
   const visibleSettings: Setting[] = session
     ? [
-        { icon: 'person-outline', label: 'Edit profile', detail: 'Photo, activities, bio' },
+        {
+          icon: 'person-outline',
+          label: 'Edit profile',
+          detail: 'Photo, activities, bio',
+          onPress: () => router.push('/edit-profile'),
+        },
         {
           icon: 'basketball-outline',
           label: 'Equipment',
@@ -135,7 +144,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.profileHeader}>
-        <Avatar initials={initials} size={82} tone="orange" />
+        <Avatar initials={initials} photoUrl={photoUrl} size={82} tone="orange" />
         <View style={styles.profileText}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{displayName}</Text>

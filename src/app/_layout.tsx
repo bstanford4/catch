@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="sign-in" options={{ title: 'Welcome to Catch' }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="equipment" options={{ title: 'Equipment' }} />
+          <Stack.Screen name="edit-profile" options={{ title: 'Edit profile' }} />
           <Stack.Screen name="availability" options={{ title: 'Availability' }} />
           <Stack.Screen name="notification-settings" options={{ title: 'Notifications' }} />
           <Stack.Screen name="my-catches" options={{ title: 'My Catches' }} />

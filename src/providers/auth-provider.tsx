@@ -1,6 +1,6 @@
 import type { Session, User } from '@supabase/supabase-js';
 import type { PropsWithChildren } from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { isDemoMode, supabase } from '@/lib/supabase';
 import { revokeStoredPushToken } from '@/services/notification-service';
@@ -39,6 +39,7 @@ type AuthContextValue = {
   isLoading: boolean;
   isProfileLoading: boolean;
   profile: UserProfile | null;
+  refreshProfile: () => Promise<void>;
   session: Session | null;
   user: User | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
@@ -78,6 +79,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const profile = profileState?.userId === currentUserId ? profileState.profile : null;
   const isProfileLoading = Boolean(currentUserId) && profileState?.userId !== currentUserId;
 
+  const refreshProfile = useCallback(async () => {
+    if (!supabase || !currentUserId) return;
+    const userId = currentUserId;
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select(
+        'user_id, first_name, area_label, preferred_radius_miles, age_21_affirmed_at, athletic_rating_visible',
+      )
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!profileRow) {
+      setProfileState({ userId, profile: null });
+      return;
+    }
+
+    const { data: preferenceRows } = await supabase
+      .from('user_activity_preferences')
+      .select('activity_type_id')
+      .eq('user_id', userId);
+    const activityIds = preferenceRows?.map((row) => row.activity_type_id) ?? [];
+    const { data: activityRows } = activityIds.length
+      ? await supabase.from('activity_types').select('slug').in('id', activityIds)
+      : { data: [] };
+
+    setProfileState({
+      userId,
+      profile: mapProfile(
+        profileRow,
+        activityRows?.map((row) => row.slug) ?? [],
+      ),
+    });
+  }, [currentUserId]);
+
   useEffect(() => {
     if (!supabase) return;
 
@@ -103,52 +138,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    if (!supabase || !currentUserId) return;
-
-    let active = true;
-    const userId = currentUserId;
-
-    async function loadProfile() {
-      if (!supabase) return;
-      const { data: profileRow } = await supabase
-        .from('profiles')
-        .select(
-          'user_id, first_name, area_label, preferred_radius_miles, age_21_affirmed_at, athletic_rating_visible',
-        )
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!active) return;
-      if (!profileRow) {
-        setProfileState({ userId, profile: null });
-        return;
-      }
-
-      const { data: preferenceRows } = await supabase
-        .from('user_activity_preferences')
-        .select('activity_type_id')
-        .eq('user_id', userId);
-      const activityIds = preferenceRows?.map((row) => row.activity_type_id) ?? [];
-      const { data: activityRows } = activityIds.length
-        ? await supabase.from('activity_types').select('slug').in('id', activityIds)
-        : { data: [] };
-
-      if (!active) return;
-      setProfileState({
-        userId,
-        profile: mapProfile(
-          profileRow,
-          activityRows?.map((row) => row.slug) ?? [],
-        ),
-      });
-    }
-
-    void loadProfile();
-
-    return () => {
-      active = false;
-    };
-  }, [currentUserId]);
+    void Promise.resolve().then(refreshProfile);
+  }, [refreshProfile]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -156,6 +147,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isLoading,
       isProfileLoading,
       profile,
+      refreshProfile,
       session,
       user: session?.user ?? null,
       completeProfile: async (input) => {
@@ -241,7 +233,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         return { needsEmailConfirmation: !data.session };
       },
     }),
-    [isLoading, isProfileLoading, profile, session],
+    [isLoading, isProfileLoading, profile, refreshProfile, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

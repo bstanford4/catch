@@ -1,18 +1,27 @@
+import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/constants/theme';
 
 type AvatarProps = {
   initials: string;
+  photoUrl?: string | null;
   size?: number;
   tone?: 'green' | 'orange' | 'gold';
 };
 
-export function Avatar({ initials, size = 44, tone = 'green' }: AvatarProps) {
+export function Avatar({ initials, photoUrl, size = 44, tone = 'green' }: AvatarProps) {
   const backgroundColor =
     tone === 'orange' ? colors.paleOrange : tone === 'gold' ? '#F6EAC7' : colors.paleGreen;
 
-  return (
+  return photoUrl ? (
+    <Image
+      accessibilityLabel={`${initials} profile photo`}
+      contentFit="cover"
+      source={photoUrl}
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+    />
+  ) : (
     <View
       accessibilityLabel={`${initials} profile placeholder`}
       style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor }]}>
@@ -32,4 +41,3 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 });
-

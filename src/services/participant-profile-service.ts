@@ -1,5 +1,6 @@
 import { getActivityColor, getActivityEmoji } from '@/constants/activity-catalog';
 import { supabase } from '@/lib/supabase';
+import { createProfilePhotoUrl } from '@/services/profile-service';
 
 export type CatchParticipant = {
   firstName: string;
@@ -22,6 +23,7 @@ export type ParticipantProfile = {
   catchesTogether: number;
   firstName: string;
   isCatchMate: boolean;
+  photoUrl: string | null;
   shareableEquipment: string[];
   userId: string;
 };
@@ -68,12 +70,19 @@ export async function listCatchParticipants(catchId: string) {
 
 export async function getParticipantProfile(userId: string) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
-  const { data, error } = await supabase.rpc('get_participant_profile', {
-    requested_user_id: userId,
-  });
+  const [{ data, error }, photoResult] = await Promise.all([
+    supabase.rpc('get_participant_profile', {
+      requested_user_id: userId,
+    }),
+    supabase.rpc('get_participant_profile_photo_path', {
+      requested_user_id: userId,
+    }),
+  ]);
   if (error) return { data: null, error: error.message };
   const row = (data?.[0] ?? null) as ParticipantProfileRow | null;
   if (!row) return { data: null, error: 'Participant profile not found.' };
+  const photoPath =
+    photoResult.error || typeof photoResult.data !== 'string' ? null : photoResult.data;
   return {
     data: {
       activities: row.activity_names.map((name, index) => {
@@ -91,6 +100,7 @@ export async function getParticipantProfile(userId: string) {
       catchesTogether: Number(row.catches_together) || 0,
       firstName: row.first_name,
       isCatchMate: row.is_catch_mate,
+      photoUrl: await createProfilePhotoUrl(photoPath),
       shareableEquipment: row.shareable_equipment ?? [],
       userId: row.user_id,
     } satisfies ParticipantProfile,

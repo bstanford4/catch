@@ -148,7 +148,12 @@ export default function ParticipantProfileScreen() {
   return (
     <Screen>
       <View style={styles.hero}>
-        <Avatar initials={profile.firstName.slice(0, 2).toUpperCase()} size={76} tone="gold" />
+        <Avatar
+          initials={profile.firstName.slice(0, 2).toUpperCase()}
+          photoUrl={profile.photoUrl}
+          size={76}
+          tone="gold"
+        />
         <View style={styles.heroText}>
           <Text style={styles.eyebrow}>
             {profile.isCatchMate ? 'CATCH MATE' : 'SHARED CATCH'}
