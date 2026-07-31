@@ -1,11 +1,13 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 
 import { supabase } from '@/lib/supabase';
+import { normalizeLastInitial } from '@/utils/member-name';
 
 export type EditableProfile = {
   activitySlugs: string[];
   bio: string;
   firstName: string;
+  lastInitial: string;
   photoPath: string | null;
   photoUrl: string | null;
 };
@@ -14,6 +16,7 @@ export type UpdateProfileInput = {
   activitySlugs: string[];
   bio: string;
   firstName: string;
+  lastInitial: string;
   photoUri?: string;
   previousPhotoPath: string | null;
   removeExistingPhoto: boolean;
@@ -45,7 +48,7 @@ export async function getMyEditableProfile(userId: string) {
     await Promise.all([
       supabase
         .from('profiles')
-        .select('first_name, bio, photo_path')
+        .select('first_name, last_initial, bio, photo_path')
         .eq('user_id', userId)
         .single(),
       supabase
@@ -68,6 +71,7 @@ export async function getMyEditableProfile(userId: string) {
       activitySlugs: activityRows?.map((item) => item.slug) ?? [],
       bio: row.bio ?? '',
       firstName: row.first_name,
+      lastInitial: row.last_initial ?? '',
       photoPath: row.photo_path,
       photoUrl: photo.url,
     } satisfies EditableProfile,
@@ -109,6 +113,7 @@ async function uploadProfilePhoto(userId: string, photoUri: string) {
 export async function updateMyProfile(input: UpdateProfileInput) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
   const firstName = input.firstName.trim();
+  const lastInitial = normalizeLastInitial(input.lastInitial);
   const bio = input.bio.trim();
   if (!firstName) return { data: null, error: 'Enter your first name.' };
   if (firstName.length > 60) {
@@ -134,6 +139,7 @@ export async function updateMyProfile(input: UpdateProfileInput) {
     requested_activity_slugs: input.activitySlugs,
     requested_bio: bio,
     requested_first_name: firstName,
+    requested_last_initial: lastInitial || null,
     requested_photo_path: photoPath,
   });
   if (error) {
@@ -158,6 +164,7 @@ export async function updateMyProfile(input: UpdateProfileInput) {
       activitySlugs: input.activitySlugs,
       bio,
       firstName,
+      lastInitial,
       photoPath,
       photoUrl: savedPhoto.url,
     } satisfies EditableProfile,

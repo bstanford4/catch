@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/screen';
 import { colors, radius, spacing } from '@/constants/theme';
 import { activities as demoActivities } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
+import { formatMemberName } from '@/utils/member-name';
 import {
   type CatchCatalogActivity,
   type CatchInput,
@@ -395,7 +396,9 @@ export default function CreateModeScreen() {
       customVenueName: locationType === 'custom_public' ? customVenueName : '',
       description: note,
       durationMinutes: effectiveDuration,
-      hostFirstName: profile?.firstName ?? 'Catch member',
+      hostFirstName: profile
+        ? formatMemberName(profile.firstName, profile.lastInitial)
+        : 'Catch member',
       hostId: session.user.id,
       intensity,
       kind: catchKind,

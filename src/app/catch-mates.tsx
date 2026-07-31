@@ -19,6 +19,7 @@ import {
   removeCatchMate,
 } from '@/services/catch-mate-service';
 import { startDirectMessage } from '@/services/messaging-service';
+import { memberInitials } from '@/utils/member-name';
 
 export default function CatchMatesScreen() {
   const router = useRouter();
@@ -234,7 +235,7 @@ export default function CatchMatesScreen() {
                 style={({ pressed }) => [styles.mateIdentity, pressed && styles.pressed]}>
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>
-                    {mate.firstName.slice(0, 2).toUpperCase()}
+                    {memberInitials(mate.firstName)}
                   </Text>
                 </View>
                 <View style={styles.mateBody}>

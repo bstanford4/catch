@@ -15,6 +15,7 @@ import {
   getHostedCatch,
   listHostJoinRequests,
 } from '@/services/catch-service';
+import { memberInitials } from '@/utils/member-name';
 
 export default function CatchRequestsScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -167,7 +168,7 @@ function RequestCard({
   request: JoinRequest;
   saved?: boolean;
 }) {
-  const initials = request.requesterFirstName.slice(0, 2).toUpperCase();
+  const initials = memberInitials(request.requesterFirstName);
   return (
     <View style={styles.card}>
       <View style={styles.avatar}><Text style={styles.avatarText}>{initials || '?'}</Text></View>

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { isDemoMode, supabase } from '@/lib/supabase';
 import { revokeStoredPushToken } from '@/services/notification-service';
+import { normalizeLastInitial } from '@/utils/member-name';
 
 type AuthResult = {
   error?: string;
@@ -16,6 +17,7 @@ export type UserProfile = {
   areaLabel: string;
   athleticRatingVisible: boolean;
   firstName: string;
+  lastInitial: string;
   preferredRadiusMiles: number;
   userId: string;
 };
@@ -25,6 +27,7 @@ export type ProfileInput = {
   age21Affirmed: boolean;
   areaLabel: string;
   firstName: string;
+  lastInitial: string;
   preferredRadiusMiles: number;
 };
 
@@ -55,6 +58,7 @@ function mapProfile(
   area_label: string;
   athletic_rating_visible: boolean;
   first_name: string;
+  last_initial: string | null;
   preferred_radius_miles: number;
   user_id: string;
   },
@@ -66,6 +70,7 @@ function mapProfile(
     areaLabel: row.area_label,
     athleticRatingVisible: row.athletic_rating_visible,
     firstName: row.first_name,
+    lastInitial: row.last_initial ?? '',
     preferredRadiusMiles: row.preferred_radius_miles,
     userId: row.user_id,
   };
@@ -85,7 +90,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const { data: profileRow } = await supabase
       .from('profiles')
       .select(
-        'user_id, first_name, area_label, preferred_radius_miles, age_21_affirmed_at, athletic_rating_visible',
+        'user_id, first_name, last_initial, area_label, preferred_radius_miles, age_21_affirmed_at, athletic_rating_visible',
       )
       .eq('user_id', userId)
       .maybeSingle();
@@ -167,6 +172,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const profileRow = {
           user_id: session.user.id,
           first_name: input.firstName.trim(),
+          last_initial: normalizeLastInitial(input.lastInitial) || null,
           area_label: input.areaLabel.trim(),
           age_18_affirmed_at: now,
           age_21_affirmed_at: input.age21Affirmed ? now : null,
@@ -198,6 +204,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
             areaLabel: input.areaLabel.trim(),
             athleticRatingVisible: false,
             firstName: input.firstName.trim(),
+            lastInitial: normalizeLastInitial(input.lastInitial),
             preferredRadiusMiles: input.preferredRadiusMiles,
             userId: session.user.id,
           },

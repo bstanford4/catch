@@ -23,6 +23,7 @@ import {
   getMyEditableProfile,
   updateMyProfile,
 } from '@/services/profile-service';
+import { formatMemberName, normalizeLastInitial } from '@/utils/member-name';
 
 type ActivityOption = {
   emoji: string;
@@ -34,6 +35,7 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { profile, refreshProfile, session } = useAuth();
   const [firstName, setFirstName] = useState(profile?.firstName ?? '');
+  const [lastInitial, setLastInitial] = useState(profile?.lastInitial ?? '');
   const [bio, setBio] = useState('');
   const [activities, setActivities] = useState<ActivityOption[]>([]);
   const [selectedSlugs, setSelectedSlugs] = useState<string[]>(profile?.activitySlugs ?? []);
@@ -61,6 +63,7 @@ export default function EditProfileScreen() {
       if (!active) return;
       if (profileResult.data) {
         setFirstName(profileResult.data.firstName);
+        setLastInitial(profileResult.data.lastInitial);
         setBio(profileResult.data.bio);
         setSelectedSlugs(profileResult.data.activitySlugs);
         setPreviousPhotoPath(profileResult.data.photoPath);
@@ -131,6 +134,7 @@ export default function EditProfileScreen() {
       activitySlugs: selectedSlugs,
       bio,
       firstName,
+      lastInitial,
       photoUri,
       previousPhotoPath,
       removeExistingPhoto,
@@ -211,6 +215,20 @@ export default function EditProfileScreen() {
           style={styles.input}
           value={firstName}
         />
+
+        <Text style={styles.label}>Last initial (optional)</Text>
+        <TextInput
+          autoCapitalize="characters"
+          maxLength={1}
+          onChangeText={(value) => setLastInitial(normalizeLastInitial(value))}
+          placeholder="Example: S"
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+          value={lastInitial}
+        />
+        <Text style={styles.help}>
+          Other members will see “{formatMemberName(firstName || 'Blake', lastInitial)}.”
+        </Text>
 
         <View style={styles.labelRow}>
           <Text style={styles.label}>Bio</Text>

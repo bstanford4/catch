@@ -8,6 +8,7 @@ import { Screen } from '@/components/ui/screen';
 import { activities } from '@/data/demo';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
+import { normalizeLastInitial } from '@/utils/member-name';
 
 const radiusOptions = [5, 10, 25, 50];
 
@@ -15,6 +16,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { completeProfile, session } = useAuth();
   const [firstName, setFirstName] = useState('');
+  const [lastInitial, setLastInitial] = useState('');
   const [areaLabel, setAreaLabel] = useState('');
   const [selectedActivities, setSelectedActivities] = useState<string[]>(['baseball']);
   const [preferredRadiusMiles, setPreferredRadiusMiles] = useState(10);
@@ -45,6 +47,7 @@ export default function OnboardingScreen() {
       age21Affirmed,
       areaLabel,
       firstName,
+      lastInitial,
       preferredRadiusMiles,
     });
     setIsSubmitting(false);
@@ -82,6 +85,22 @@ export default function OnboardingScreen() {
           value={firstName}
         />
       </View>
+
+      <Text style={styles.label}>Last initial (optional)</Text>
+      <View style={styles.inputWrap}>
+        <Ionicons color={colors.muted} name="id-card-outline" size={19} />
+        <TextInput
+          accessibilityLabel="Last initial"
+          autoCapitalize="characters"
+          maxLength={1}
+          onChangeText={(value) => setLastInitial(normalizeLastInitial(value))}
+          placeholder="Example: S"
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+          value={lastInitial}
+        />
+      </View>
+      <Text style={styles.helper}>Catch will display your name as “{firstName.trim() || 'Blake'}{lastInitial ? ` ${lastInitial}.` : ''}”</Text>
 
       <Text style={styles.label}>What general area are you in?</Text>
       <View style={styles.inputWrap}>
@@ -393,4 +412,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

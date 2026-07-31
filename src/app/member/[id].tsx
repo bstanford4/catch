@@ -25,6 +25,7 @@ import {
   getParticipantProfile,
   reportParticipant,
 } from '@/services/participant-profile-service';
+import { memberInitials } from '@/utils/member-name';
 
 export default function ParticipantProfileScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -149,7 +150,7 @@ export default function ParticipantProfileScreen() {
     <Screen>
       <View style={styles.hero}>
         <Avatar
-          initials={profile.firstName.slice(0, 2).toUpperCase()}
+          initials={memberInitials(profile.firstName)}
           photoUrl={profile.photoUrl}
           size={76}
           tone="gold"

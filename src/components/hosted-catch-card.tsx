@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar } from '@/components/ui/avatar';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 import type { HostedCatch } from '@/services/catch-service';
+import { memberInitials } from '@/utils/member-name';
 
 export function catchLocationLabel(item: HostedCatch) {
   if (item.locationType === 'private') return `Private spot near ${item.customVenueArea}`;
@@ -20,7 +21,7 @@ export function HostedCatchCard({ item }: { item: HostedCatch }) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(new Date(item.startsAt));
-  const initials = item.hostFirstName.slice(0, 2).toUpperCase();
+  const initials = memberInitials(item.hostFirstName);
 
   return (
     <Link href={{ pathname: '/catch/[id]', params: { id: item.id } }} asChild>

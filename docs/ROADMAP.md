@@ -29,7 +29,8 @@ discovery radius, optional 21+ affirmation, broad recurring availability, and
 equipment persist to Supabase. Equipment supports optional compressed camera or
 photo-library images in a private owner-scoped Storage bucket. Remaining work is
 editable first name, bio, activities, and private profile photos are now
-implemented. Remaining work is expanded privacy settings, account deletion,
+implemented. An optional last initial distinguishes members without collecting
+full last names. Remaining work is expanded privacy settings, account deletion,
 and additional contextual permissions.
 
 ### Phase 3 — venues and location

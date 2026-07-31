@@ -13,6 +13,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { listAvailability } from '@/services/availability-service';
 import { listEquipment } from '@/services/equipment-service';
 import { getMyEditableProfile } from '@/services/profile-service';
+import { formatMemberName } from '@/utils/member-name';
 
 type Setting = {
   icon: ComponentProps<typeof Ionicons>['name'];
@@ -29,7 +30,9 @@ export default function ProfileScreen() {
   const [equipmentDetail, setEquipmentDetail] = useState('Nothing added yet');
   const [availabilityDetail, setAvailabilityDetail] = useState('Not set yet');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const displayName = profile?.firstName ?? 'Blake';
+  const displayName = profile
+    ? formatMemberName(profile.firstName, profile.lastInitial)
+    : 'Blake';
   const initials =
     displayName
       .split(/\s+/)

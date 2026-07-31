@@ -19,6 +19,7 @@ import {
   listMessageThreads,
   subscribeToMessageThreads,
 } from '@/services/messaging-service';
+import { memberInitials } from '@/utils/member-name';
 
 export default function MessagesScreen() {
   const router = useRouter();
@@ -139,7 +140,7 @@ function LiveThread({ item, onPress }: { item: MessageThread; onPress: () => voi
         onPress={onPress}
         style={({ pressed }) => [styles.thread, pressed && styles.pressed]}>
         <Avatar
-          initials={item.otherFirstName.slice(0, 2).toUpperCase()}
+          initials={memberInitials(item.otherFirstName)}
           size={52}
           tone="green"
         />

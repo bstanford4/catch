@@ -36,6 +36,7 @@ import {
   type CatchParticipant,
   listCatchParticipants,
 } from '@/services/participant-profile-service';
+import { memberInitials } from '@/utils/member-name';
 
 export default function CatchDetailsScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -217,7 +218,7 @@ function LiveCatchDetails({ id }: { id: string }) {
           })
         }
         style={({ pressed }) => [styles.hostRow, pressed && styles.pressed]}>
-        <Avatar initials={item.hostFirstName.slice(0, 2).toUpperCase()} size={52} tone="gold" />
+        <Avatar initials={memberInitials(item.hostFirstName)} size={52} tone="gold" />
         <View style={styles.hostText}>
           <Text style={styles.hostName}>{item.hostFirstName} is hosting</Text>
           <Text style={styles.muted}>
@@ -272,7 +273,7 @@ function LiveCatchDetails({ id }: { id: string }) {
                   }
                   style={({ pressed }) => [styles.crewRow, pressed && styles.pressed]}>
                   <Avatar
-                    initials={person.firstName.slice(0, 2).toUpperCase()}
+                    initials={memberInitials(person.firstName)}
                     size={42}
                     tone="green"
                   />
