@@ -145,7 +145,19 @@ export default function MyCatchesScreen() {
           <Text style={styles.sectionTitle}>History</Text>
           <View style={styles.list}>
             {history.map((item) => (
-              <HostedCatchCard item={item} key={item.id} />
+              <HostedCatchCard
+                item={item}
+                key={item.id}
+                onMemories={
+                  item.status === 'completed'
+                    ? () =>
+                        router.push(`/catch-memories/${item.id}` as never)
+                    : undefined
+                }
+                onOpen={() =>
+                  router.push({ pathname: '/catch/[id]', params: { id: item.id } })
+                }
+              />
             ))}
           </View>
         </View>
@@ -160,6 +172,8 @@ function HostedCatchCard({
   item,
   onCancel,
   onEdit,
+  onMemories,
+  onOpen,
   onRequests,
 }: {
   canceling?: boolean;
@@ -167,6 +181,8 @@ function HostedCatchCard({
   item: HostedCatch;
   onCancel?: () => void;
   onEdit?: () => void;
+  onMemories?: () => void;
+  onOpen?: () => void;
   onRequests?: () => void;
 }) {
   const startLabel = new Intl.DateTimeFormat('en-US', {
@@ -227,6 +243,30 @@ function HostedCatchCard({
               <Ionicons color={colors.forest} name="pencil-outline" size={17} />
               <Text style={styles.requestText}>Edit</Text>
             </Pressable>
+          </View>
+        ) : null}
+        {!active && onOpen ? (
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={onOpen}
+              style={({ pressed }) => [styles.requestButton, pressed && styles.pressed]}>
+              <Ionicons color={colors.forest} name="open-outline" size={17} />
+              <Text style={styles.requestText}>
+                {['open', 'full', 'confirmed'].includes(item.status)
+                  ? 'Review & complete'
+                  : 'View Catch'}
+              </Text>
+            </Pressable>
+            {onMemories ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onMemories}
+                style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}>
+                <Ionicons color={colors.forest} name="images-outline" size={17} />
+                <Text style={styles.requestText}>Memories</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
         {active && onEdit && onCancel ? (

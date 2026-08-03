@@ -54,15 +54,19 @@ The local Expo demo does not require Supabase. To enable the backend:
 18. Run `migrations/202607300016_last_initial_display_names.sql` once. It adds
     an optional one-letter last initial and formats member names consistently
     across profiles, requests, matching, proposals, messages, and push alerts.
-19. Run `seed.sql` for catalog and public-venue demo records.
-20. Copy `.env.example` to `.env` and add the project URL and client-safe
+19. Run `migrations/202608020017_catch_completion_memories.sql` once. It adds
+    host-confirmed completion and a private Catch Memories bucket for crew-only
+    photos and videos up to 60 seconds. Approved participants can contribute at
+    any later date and can remove their own uploads.
+20. Run `seed.sql` for catalog and public-venue demo records.
+21. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-21. Add `catch://**` to the project's Auth redirect URLs.
-22. Link the app to Expo EAS, put its project ID in
+22. Add `catch://**` to the project's Auth redirect URLs.
+23. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-23. Restart Expo so client environment variables are rebundled.
+24. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

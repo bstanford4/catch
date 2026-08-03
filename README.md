@@ -13,7 +13,9 @@ explanations, and in-app alerts for newly posted matching Catches. Contextual
 messaging adds private proposal and Catch threads, unread counts, system
 updates, and live Realtime refresh. Notification settings add account-wide
 category controls, device-token lifecycle, privacy-safe deep links, and
-automatic Expo push dispatch. It runs without credentials in demo mode and
+automatic Expo push dispatch. Hosts can confirm that a past Catch happened,
+opening a private Catch Memories album where approved crew members can add
+photos or short videos later and remove their own uploads. It runs without credentials in demo mode and
 establishes the product shell, navigation, design system, account
 creation and sign-in, discovery feed, creation flow, messages, profile,
 empty/loading/error states, and backend boundaries needed for later phases.

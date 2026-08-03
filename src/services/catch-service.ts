@@ -336,6 +336,14 @@ export async function cancelCatch(id: string, hostId: string) {
   return { error: error?.message };
 }
 
+export async function completeCatch(id: string) {
+  if (!supabase) return { error: 'Supabase is not configured.' };
+  const { error } = await supabase.rpc('complete_catch', {
+    requested_catch_id: id,
+  });
+  return { error: error?.message };
+}
+
 async function syncPrivateLocation(id: string, input: CatchInput) {
   if (!supabase) return 'Supabase is not configured.';
   if (input.locationType === 'private') {

@@ -78,8 +78,12 @@ stale-token cleanup, and notification analytics.
 
 ### Phase 7 — completion and reputation
 
-Completion/cancellation/no-show flows, reliability events, rating eligibility,
-athletic-rating visibility, equipment/venue reviews, and Catch Cards.
+Host-confirmed completion and private participant-only Catch Memories are now
+implemented. Completed crews can add photos or short videos immediately or
+weeks later, while uploaders retain deletion control. Remaining work is
+participant attendance/no-show confirmation, reliability events, rating
+eligibility and entry, athletic-rating visibility, equipment/venue reviews,
+and shareable Catch Cards.
 
 ### Phase 8 — safety and moderation
 

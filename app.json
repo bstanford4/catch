@@ -31,9 +31,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Catch uses photos you select for your profile and sporting equipment.",
-          "cameraPermission": "Catch uses the camera when you choose to photograph yourself or sporting equipment.",
-          "microphonePermission": false
+          "photosPermission": "Catch uses photos and videos you select for profiles, equipment, and private Catch Memories.",
+          "cameraPermission": "Catch uses the camera when you choose to take a profile or equipment photo or capture a private Catch Memory.",
+          "microphonePermission": "Catch uses the microphone only when you choose to record a Catch Memory video."
         }
       ],
       [
@@ -51,7 +51,8 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 96
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

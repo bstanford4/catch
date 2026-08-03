@@ -23,6 +23,7 @@ import { getActivity, getCatch } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
 import { saveCatchMate } from '@/services/catch-mate-service';
 import {
+  completeCatch,
   type HostedCatch,
   type JoinRequest,
   type PrivateCatchLocation,
@@ -54,8 +55,10 @@ function LiveCatchDetails({ id }: { id: string }) {
   const [participants, setParticipants] = useState<CatchParticipant[]>([]);
   const [message, setMessage] = useState('');
   const [mateSaved, setMateSaved] = useState(false);
+  const [openedAt] = useState(Date.now);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -151,6 +154,20 @@ function LiveCatchDetails({ id }: { id: string }) {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }
 
+  async function markComplete() {
+    if (!item) return;
+    setIsCompleting(true);
+    setError('');
+    const result = await completeCatch(item.id);
+    setIsCompleting(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setItem({ ...item, status: 'completed' });
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
+
   if (isLoading) {
     return (
       <Screen contentContainerStyle={styles.loading}>
@@ -191,6 +208,8 @@ function LiveCatchDetails({ id }: { id: string }) {
   }).format(new Date(item.startsAt));
   const isHost = item.hostId === session.user.id;
   const approved = request?.status === 'approved';
+  const catchEnded =
+    new Date(item.startsAt).getTime() + item.durationMinutes * 60_000 <= openedAt;
   const locationValue = privateLocation
     ? `${privateLocation.placeName} · ${privateLocation.exactAddress}`
     : catchLocationLabel(item);
@@ -311,6 +330,46 @@ function LiveCatchDetails({ id }: { id: string }) {
           </Text>
         </View>
       </View>
+
+      {isHost && catchEnded && ['open', 'full', 'confirmed'].includes(item.status) ? (
+        <View style={styles.completionCard}>
+          <View style={styles.completionHeading}>
+            <Ionicons color={colors.orangeDark} name="checkmark-done-circle-outline" size={25} />
+            <View style={styles.completionText}>
+              <Text style={styles.sectionTitle}>Did this Catch happen?</Text>
+              <Text style={styles.muted}>
+                Mark it complete to open the private crew album and the next post-Catch steps.
+              </Text>
+            </View>
+          </View>
+          <Button
+            disabled={isCompleting}
+            label={isCompleting ? 'Completing…' : 'Mark Catch complete'}
+            onPress={markComplete}
+          />
+        </View>
+      ) : null}
+      {item.status === 'completed' && (isHost || approved) ? (
+        <View style={styles.completionCard}>
+          <View style={styles.completionHeading}>
+            <Ionicons color={colors.forest} name="images-outline" size={25} />
+            <View style={styles.completionText}>
+              <Text style={styles.sectionTitle}>Catch Memories</Text>
+              <Text style={styles.muted}>
+                Add photos or short videos today—or come back weeks from now.
+              </Text>
+            </View>
+          </View>
+          <Button
+            icon="images-outline"
+            label="Open Catch Memories"
+            onPress={() =>
+              router.push(`/catch-memories/${item.id}` as never)
+            }
+            variant="secondary"
+          />
+        </View>
+      ) : null}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {!isHost && (!request || ['declined', 'withdrawn'].includes(request.status)) ? (
@@ -519,6 +578,17 @@ const styles = StyleSheet.create({
   privacyText: { flex: 1, gap: 2 },
   privacyTitle: { color: colors.forest, fontSize: 13, fontWeight: '800' },
   privacyBody: { flex: 1, color: colors.muted, fontSize: 11, lineHeight: 16 },
+  completionCard: {
+    gap: 13,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    padding: spacing.md,
+  },
+  completionHeading: { flexDirection: 'row', alignItems: 'flex-start', gap: 11 },
+  completionText: { flex: 1, gap: 4 },
   requestBox: { gap: 11, marginBottom: spacing.md },
   messageInput: {
     minHeight: 92,
