@@ -149,7 +149,16 @@ export default function CatchMatesScreen() {
           <View style={styles.headingText}>
             <Text style={styles.friendTitle}>Add someone you already know</Text>
             <Text style={styles.friendBody}>
-              Use a private, single-use code. Catch never exposes a searchable email directory.
+              Friend codes connect two people as Catch Mates without making anyone searchable by email.
+            </Text>
+          </View>
+        </View>
+        <View style={styles.stepHeading}>
+          <View style={styles.stepNumber}><Text style={styles.stepNumberText}>1</Text></View>
+          <View style={styles.headingText}>
+            <Text style={styles.stepTitle}>Send your friend a code</Text>
+            <Text style={styles.stepBody}>
+              Create a private, one-time code and send it to someone you know. When they enter it, you will both become Catch Mates.
             </Text>
           </View>
         </View>
@@ -157,7 +166,7 @@ export default function CatchMatesScreen() {
           <View style={styles.codeBox}>
             <Text selectable style={styles.code}>{invite.code}</Text>
             <Text style={styles.codeHelp}>
-              Share this code privately. It expires{' '}
+              Send this code to your friend. It can be used once and expires{' '}
               {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
                 new Date(invite.expiresAt),
               )}.
@@ -167,18 +176,30 @@ export default function CatchMatesScreen() {
           <Button
             disabled={isSaving}
             icon="key-outline"
-            label={isSaving ? 'Creating code...' : 'Create my friend code'}
+            label={isSaving ? 'Creating code...' : 'Create a code to share'}
             onPress={generateInvite}
             variant="secondary"
           />
         )}
+        <View style={styles.orRow}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>OR</Text>
+          <View style={styles.orLine} />
+        </View>
+        <View style={styles.stepHeading}>
+          <View style={styles.stepNumber}><Text style={styles.stepNumberText}>2</Text></View>
+          <View style={styles.headingText}>
+            <Text style={styles.stepTitle}>Enter a code a friend sent you</Text>
+            <Text style={styles.stepBody}>Paste their 10-character code below to add each other.</Text>
+          </View>
+        </View>
         <View style={styles.redeemRow}>
           <TextInput
             autoCapitalize="characters"
             accessibilityLabel="Friend code"
             maxLength={10}
             onChangeText={(value) => setFriendCode(value.replace(/[^a-z0-9]/gi, '').toUpperCase())}
-            placeholder="ENTER CODE"
+            placeholder="10-CHARACTER CODE"
             placeholderTextColor={colors.muted}
             style={styles.codeInput}
             value={friendCode}
@@ -188,7 +209,7 @@ export default function CatchMatesScreen() {
             disabled={isSaving}
             onPress={redeemInvite}
             style={({ pressed }) => [styles.addCodeButton, pressed && styles.pressed]}>
-            <Text style={styles.addCodeText}>Add</Text>
+            <Text style={styles.addCodeText}>Add friend</Text>
           </Pressable>
         </View>
       </View>
@@ -325,6 +346,14 @@ const styles = StyleSheet.create({
   friendHeading: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
   friendTitle: { color: colors.ink, fontSize: 15, fontWeight: '900' },
   friendBody: { marginTop: 3, color: colors.muted, fontSize: 11, lineHeight: 16 },
+  stepHeading: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
+  stepNumber: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.paleGreen },
+  stepNumberText: { color: colors.forest, fontSize: 10, fontWeight: '900' },
+  stepTitle: { color: colors.ink, fontSize: 12, fontWeight: '900' },
+  stepBody: { marginTop: 2, color: colors.muted, fontSize: 10, lineHeight: 15 },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  orLine: { flex: 1, height: 1, backgroundColor: colors.line },
+  orText: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   codeBox: { borderRadius: radius.md, backgroundColor: colors.paleGreen, padding: 14 },
   code: { color: colors.forest, fontSize: 25, fontWeight: '900', letterSpacing: 3, textAlign: 'center' },
   codeHelp: { marginTop: 5, color: colors.muted, fontSize: 10, lineHeight: 15, textAlign: 'center' },
@@ -342,13 +371,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
   },
   addCodeButton: {
-    minWidth: 74,
+    minWidth: 96,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
     backgroundColor: colors.forest,
   },
-  addCodeText: { color: colors.white, fontSize: 13, fontWeight: '800' },
+  addCodeText: { color: colors.white, fontSize: 11, fontWeight: '800' },
   loading: { alignItems: 'center', gap: 9, marginTop: spacing.xl },
   muted: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   error: { marginTop: spacing.md, color: colors.error, fontSize: 13, textAlign: 'center' },

@@ -5,6 +5,7 @@ export const activities: Activity[] = [
   { id: 'football', name: 'Football', emoji: '🏈', color: '#F5E7D8' },
   { id: 'basketball', name: 'Basketball', emoji: '🏀', color: '#FCE6DC' },
   { id: 'frisbee', name: 'Frisbee', emoji: '🥏', color: '#E2EEF4' },
+  { id: 'rugby', name: 'Rugby', emoji: '🏉', color: '#E3EFE4' },
   { id: 'tennis', name: 'Tennis', emoji: '🎾', color: '#EDF2D2' },
   { id: 'pickleball', name: 'Pickleball', emoji: '🏓', color: '#F4E9C8' },
   { id: 'soccer', name: 'Soccer', emoji: '⚽', color: '#E7E8E4' },
@@ -129,4 +130,3 @@ export function getActivity(id: string) {
 export function getCatch(id: string) {
   return catches.find((item) => item.id === id);
 }
-

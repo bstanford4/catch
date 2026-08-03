@@ -3,6 +3,7 @@ insert into public.activity_types (slug, name, emoji, sort_order) values
   ('softball', 'Softball', U&'\+01F94E', 20),
   ('football', 'Football', U&'\+01F3C8', 30),
   ('frisbee', 'Frisbee', U&'\+01F94F', 40),
+  ('rugby', 'Rugby', U&'\+01F3C9', 45),
   ('lacrosse', 'Lacrosse', U&'\+01F94D', 50),
   ('soccer', 'Soccer', U&'\26BD', 60),
   ('basketball', 'Basketball', U&'\+01F3C0', 70),
