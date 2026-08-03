@@ -106,6 +106,8 @@ Expo/EAS-linked native build and platform credentials; it does not run in the
 web preview.
 Completed Catch crews can keep a private long-term album and optionally publish
 permission-confirmed photos to the signed-in Catch Highlights community view.
+A unified Catch History lists completed Catches a member hosted or joined and
+opens those same original albums, so photos are never uploaded twice.
 See the roadmap for details.
 
 Catch creation includes flexible "Other" options for a custom activity,

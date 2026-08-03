@@ -48,6 +48,12 @@ Participant name credit is separately opt-in and can be withdrawn without
 removing the photo. A privacy or content report immediately hides the photo
 pending moderator review; the underlying report is never public.
 
+Catch History is private to the signed-in member and includes only completed
+Catches they hosted or joined as an approved participant. Its previews reuse the
+crew-authorized Catch Memories objects rather than copying media. Private meeting
+details are reduced to the Catch's broad area label, and blocked members' names
+are omitted from the viewer's crew summary.
+
 PostGIS provides accurate radius queries and spatial indexes. The tradeoff is
 additional local setup and careful safe-view design; it is justified because
 distance discovery is core. Coarse search points should be deliberately rounded

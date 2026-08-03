@@ -77,12 +77,21 @@ export default function MyCatchesScreen() {
           <Text style={styles.title}>My Catches</Text>
           <Text style={styles.subtitle}>Plans you created, all in one place.</Text>
         </View>
-        <Pressable
-          accessibilityLabel="Create a Catch"
-          onPress={() => router.push('/(tabs)/create')}
-          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-          <Ionicons color={colors.white} name="add" size={25} />
-        </Pressable>
+        <View style={styles.headingActions}>
+          <Pressable
+            accessibilityLabel="Open Catch History"
+            onPress={() => router.push('/catch-history' as never)}
+            style={({ pressed }) => [styles.historyButton, pressed && styles.pressed]}>
+            <Ionicons color={colors.forest} name="images-outline" size={21} />
+            <Text style={styles.historyButtonText}>History</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel="Create a Catch"
+            onPress={() => router.push('/(tabs)/create')}
+            style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+            <Ionicons color={colors.white} name="add" size={25} />
+          </Pressable>
+        </View>
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -293,6 +302,20 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.orangeDark, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
   title: { color: colors.ink, fontSize: 31, fontWeight: '900', letterSpacing: -1 },
   subtitle: { marginTop: 3, color: colors.muted, fontSize: 13 },
+  headingActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  historyButton: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 17,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 11,
+  },
+  historyButtonText: { color: colors.forest, fontSize: 11, fontWeight: '900' },
   addButton: {
     width: 48,
     height: 48,

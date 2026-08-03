@@ -52,6 +52,7 @@ export default function RootLayout() {
           <Stack.Screen name="availability" options={{ title: 'Availability' }} />
           <Stack.Screen name="notification-settings" options={{ title: 'Notifications' }} />
           <Stack.Screen name="my-catches" options={{ title: 'My Catches' }} />
+          <Stack.Screen name="catch-history" options={{ title: 'Catch History' }} />
           <Stack.Screen name="create/[mode]" options={{ title: 'Create a Catch' }} />
           <Stack.Screen name="catch/[id]" options={{ title: 'Catch details' }} />
           <Stack.Screen name="catch-memories/[id]" options={{ title: 'Catch Memories' }} />

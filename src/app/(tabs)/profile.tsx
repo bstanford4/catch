@@ -108,6 +108,12 @@ export default function ProfileScreen() {
           detail: 'Saved people and direct proposals',
           onPress: () => router.push('/catch-mates'),
         },
+        {
+          icon: 'images-outline',
+          label: 'Catch History',
+          detail: 'Completed Catches and memories',
+          onPress: () => router.push('/catch-history' as never),
+        },
         { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
         {
           icon: 'notifications-outline',
