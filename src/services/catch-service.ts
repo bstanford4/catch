@@ -56,6 +56,7 @@ export type HostedCatch = {
   status: CatchStatus;
   title: string;
   venue: CatchVenue | null;
+  visibility: 'public' | 'unlisted' | 'invite_only';
 };
 
 export type CatchInput = {
@@ -109,6 +110,7 @@ type HostedCatchRow = {
   status: CatchStatus;
   title: string;
   area_label: string;
+  visibility: 'public' | 'unlisted' | 'invite_only';
   venues: VenueRow | VenueRow[] | null;
 };
 
@@ -166,6 +168,7 @@ function mapHostedCatch(row: HostedCatchRow): HostedCatch | null {
     status: row.status,
     title: row.title,
     venue: venue ? mapVenue(venue) : null,
+    visibility: row.visibility,
   };
 }
 
@@ -184,6 +187,7 @@ const hostedCatchSelect = `
   status,
   metadata,
   area_label,
+  visibility,
   activity_types(id, slug, name, emoji),
   venues(id, name, area_label, address_display)
 `;

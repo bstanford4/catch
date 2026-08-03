@@ -39,6 +39,15 @@ preferences. Saved availability can privately generate a Catch alert without
 making that person's routine visible. Matching uses broad weekday/time labels
 and a broad area; alerts never serialize private addresses.
 
+Catch Memories is crew-only and every upload defaults to private. An uploader can
+publish an individual photo to Catch Highlights only after confirming permission
+from everyone recognizable. Highlights require a completed public Catch at a
+catalog or custom public place, are visible only to signed-in members, respect
+blocks, and never expose private/undecided meeting details. Videos remain private.
+Participant name credit is separately opt-in and can be withdrawn without
+removing the photo. A privacy or content report immediately hides the photo
+pending moderator review; the underlying report is never public.
+
 PostGIS provides accurate radius queries and spatial indexes. The tradeoff is
 additional local setup and careful safe-view design; it is justified because
 distance discovery is core. Coarse search points should be deliberately rounded

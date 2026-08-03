@@ -15,7 +15,10 @@ updates, and live Realtime refresh. Notification settings add account-wide
 category controls, device-token lifecycle, privacy-safe deep links, and
 automatic Expo push dispatch. Hosts can confirm that a past Catch happened,
 opening a private Catch Memories album where approved crew members can add
-photos or short videos later and remove their own uploads. It runs without credentials in demo mode and
+photos or short videos later and remove their own uploads. Catch Highlights lets
+uploaders explicitly share individual photos from completed public Catches with
+signed-in members; uploads default to private, videos stay private, names are
+separately opt-in, and reports hide a photo pending review. It runs without credentials in demo mode and
 establishes the product shell, navigation, design system, account
 creation and sign-in, discovery feed, creation flow, messages, profile,
 empty/loading/error states, and backend boundaries needed for later phases.
@@ -101,6 +104,8 @@ native device, and open the correct in-app screen from privacy-safe push alerts.
 Production maps and app-store releases remain deferred. Native push requires an
 Expo/EAS-linked native build and platform credentials; it does not run in the
 web preview.
+Completed Catch crews can keep a private long-term album and optionally publish
+permission-confirmed photos to the signed-in Catch Highlights community view.
 See the roadmap for details.
 
 Catch creation includes flexible "Other" options for a custom activity,

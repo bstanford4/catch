@@ -58,15 +58,19 @@ The local Expo demo does not require Supabase. To enable the backend:
     host-confirmed completion and a private Catch Memories bucket for crew-only
     photos and videos up to 60 seconds. Approved participants can contribute at
     any later date and can remove their own uploads.
-20. Run `seed.sql` for catalog and public-venue demo records.
-21. Copy `.env.example` to `.env` and add the project URL and client-safe
+20. Run `migrations/202608020018_public_catch_highlights.sql` once. It adds the
+    signed-in Catch Highlights feed, private-by-default per-photo sharing with a
+    permission attestation, opt-in participant name credit, block filtering, and
+    report-to-hide moderation. Videos and non-public locations remain private.
+21. Run `seed.sql` for catalog and public-venue demo records.
+22. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-22. Add `catch://**` to the project's Auth redirect URLs.
-23. Link the app to Expo EAS, put its project ID in
+23. Add `catch://**` to the project's Auth redirect URLs.
+24. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-24. Restart Expo so client environment variables are rebundled.
+25. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

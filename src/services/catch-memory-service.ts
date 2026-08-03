@@ -12,10 +12,12 @@ export type CatchMemory = {
   id: string;
   mediaType: 'photo' | 'video';
   mimeType: string;
+  moderationStatus: 'visible' | 'hidden';
   storagePath: string;
   uploaderId: string;
   uploaderName: string;
   url: string;
+  visibility: 'private' | 'public';
   width: number | null;
 };
 
@@ -38,9 +40,11 @@ type CatchMemoryRow = {
   id: string;
   media_type: 'photo' | 'video';
   mime_type: string;
+  moderation_status: 'visible' | 'hidden';
   storage_path: string;
   uploader_id: string;
   uploader_name: string;
+  visibility: 'private' | 'public';
   width: number | null;
 };
 
@@ -76,10 +80,12 @@ export async function listCatchMemories(catchId: string) {
         id: row.id,
         mediaType: row.media_type,
         mimeType: row.mime_type,
+        moderationStatus: row.moderation_status,
         storagePath: row.storage_path,
         uploaderId: row.uploader_id,
         uploaderName: row.uploader_name,
         url: signed.url!,
+        visibility: row.visibility,
         width: row.width,
       })),
     error: urlError ?? null,
@@ -191,4 +197,34 @@ export async function deleteCatchMemory(memory: CatchMemory, userId: string) {
     .from('catch-memories')
     .remove([memory.storagePath]);
   return { error: storageError?.message };
+}
+
+export async function setCatchMemoryPublic(memoryId: string, isPublic: boolean) {
+  if (!supabase) return { error: 'Supabase is not configured.' };
+  const { error } = await supabase.rpc('set_catch_memory_public', {
+    permission_attested: isPublic,
+    requested_memory_id: memoryId,
+    requested_public: isPublic,
+  });
+  return { error: error?.message };
+}
+
+export async function getMyCatchHighlightCredit(catchId: string, userId: string) {
+  if (!supabase) return { data: false, error: 'Supabase is not configured.' };
+  const { data, error } = await supabase
+    .from('catch_highlight_credits')
+    .select('catch_id')
+    .eq('catch_id', catchId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  return { data: Boolean(data), error: error?.message ?? null };
+}
+
+export async function setMyCatchHighlightCredit(catchId: string, isVisible: boolean) {
+  if (!supabase) return { error: 'Supabase is not configured.' };
+  const { error } = await supabase.rpc('set_catch_highlight_credit', {
+    requested_catch_id: catchId,
+    requested_visible: isVisible,
+  });
+  return { error: error?.message };
 }

@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { ActivityCard } from '@/components/activity-card';
 import { CatchMateRow } from '@/components/catch-mate-row';
+import { PublicCatchHighlightCard } from '@/components/public-catch-highlight-card';
 import { Avatar } from '@/components/ui/avatar';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Screen } from '@/components/ui/screen';
@@ -16,11 +17,16 @@ import {
   type CatchMatchNotification,
   listCatchMatchNotifications,
 } from '@/services/matching-service';
+import {
+  type PublicCatchHighlight,
+  listPublicCatchHighlights,
+} from '@/services/catch-highlight-service';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile, session } = useAuth();
   const [unreadMatches, setUnreadMatches] = useState(0);
+  const [recentHighlight, setRecentHighlight] = useState<PublicCatchHighlight | null>(null);
   const firstName = profile?.firstName ?? 'Blake';
   const initials =
     firstName
@@ -43,13 +49,17 @@ export default function HomeScreen() {
     useCallback(() => {
       if (!session) return;
       let active = true;
-      void listCatchMatchNotifications().then((result) => {
-        if (active && !result.error) {
+      void Promise.all([listCatchMatchNotifications(), listPublicCatchHighlights(1)]).then(
+        ([result, highlightResult]) => {
+          if (!active) return;
+          if (!result.error) {
           setUnreadMatches(
             result.data.filter((item: CatchMatchNotification) => !item.readAt).length,
           );
-        }
-      });
+          }
+          if (!highlightResult.error) setRecentHighlight(highlightResult.data[0] ?? null);
+        },
+      );
       return () => {
         active = false;
       };
@@ -137,6 +147,34 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </ScrollView>
+
+      <View style={styles.section}>
+        <SectionHeader
+          action="Look back"
+          onAction={() => router.push('/catch-highlights' as never)}
+          title="Catch Highlights"
+        />
+        <Text style={styles.sectionSubtitle}>Real Catches, shared by the people who were there.</Text>
+        {recentHighlight ? (
+          <PublicCatchHighlightCard item={recentHighlight} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/catch-highlights' as never)}
+            style={({ pressed }) => [styles.highlightCta, pressed && styles.pressed]}>
+            <View style={styles.highlightCtaIcon}>
+              <Ionicons color={colors.orangeDark} name="images-outline" size={24} />
+            </View>
+            <View style={styles.matesText}>
+              <Text style={styles.matesTitle}>The good stuff lives here</Text>
+              <Text style={styles.sectionSubtitle}>
+                Completed Catches and photos shared with permission.
+              </Text>
+            </View>
+            <Ionicons color={colors.muted} name="chevron-forward" size={20} />
+          </Pressable>
+        )}
+      </View>
 
       <View style={styles.section}>
         <SectionHeader
@@ -390,6 +428,24 @@ const styles = StyleSheet.create({
   },
   matesText: { flex: 1, gap: 2 },
   matesTitle: { color: colors.ink, fontSize: 15, fontWeight: '900' },
+  highlightCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    backgroundColor: colors.paper,
+    padding: 14,
+  },
+  highlightCtaIcon: {
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+    backgroundColor: colors.paleOrange,
+  },
   cardList: {
     gap: 13,
   },

@@ -80,7 +80,11 @@ stale-token cleanup, and notification analytics.
 
 Host-confirmed completion and private participant-only Catch Memories are now
 implemented. Completed crews can add photos or short videos immediately or
-weeks later, while uploaders retain deletion control. Remaining work is
+weeks later, while uploaders retain deletion control. Signed-in Catch Highlights
+is also implemented as an opt-in proof-of-play view: individual photos from
+completed public Catches at public places can be shared with permission, names
+are separately opt-in, videos remain private, and reports hide photos pending
+review. This is deliberately not a generic follower/content feed. Remaining work is
 participant attendance/no-show confirmation, reliability events, rating
 eligibility and entry, athletic-rating visibility, equipment/venue reviews,
 and shareable Catch Cards.
