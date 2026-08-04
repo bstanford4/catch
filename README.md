@@ -3,6 +3,8 @@
 Catch is an activity-first mobile app for adults who want to find someone nearby
 for a casual, low-commitment recreational activity.
 
+Hosted friend beta: [https://catch-bstanford.expo.app](https://catch-bstanford.expo.app)
+
 The app includes a polished seeded demo plus live Supabase-backed authentication,
 profile onboarding, broad availability, equipment management, Catch Now and
 scheduled Catch creation, live discovery, join requests, host approval, and
@@ -58,6 +60,8 @@ npm.cmd run web
 npm.cmd run lint
 npm.cmd run typecheck
 npm.cmd test
+npx.cmd expo export --platform web
+npx.cmd eas-cli deploy --prod --non-interactive
 ```
 
 ## Environment
