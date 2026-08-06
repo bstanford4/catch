@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -146,6 +147,17 @@ export default function CatchMemoriesScreen() {
 
   function confirmDelete(memory: CatchMemory) {
     if (!session || memory.uploaderId !== session.user.id) return;
+    if (Platform.OS === 'web') {
+      if (!window.confirm('Remove this memory?\n\nIt will be removed from the Catch album.')) return;
+      void deleteCatchMemory(memory, session.user.id).then((result) => {
+        if (result.error) {
+          setError(result.error);
+        } else {
+          setMemories((current) => current.filter((item) => item.id !== memory.id));
+        }
+      });
+      return;
+    }
     Alert.alert('Remove this memory?', 'It will be removed from the Catch album.', [
       { style: 'cancel', text: 'Keep it' },
       {
@@ -185,6 +197,13 @@ export default function CatchMemoriesScreen() {
   }
 
   function confirmPublicShare(memory: CatchMemory) {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Share this photo in Catch Highlights?\n\nIt will be visible to signed-in Catch members. By continuing, you confirm everyone clearly shown gave permission. The location shown will stay broad and public.',
+      );
+      if (confirmed) void changeMemoryVisibility(memory, true);
+      return;
+    }
     Alert.alert(
       'Share this photo in Catch Highlights?',
       'It will be visible to signed-in Catch members. By continuing, you confirm everyone clearly shown gave permission. The location shown will stay broad and public.',
