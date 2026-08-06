@@ -13,6 +13,11 @@ import { useAuth } from '@/providers/auth-provider';
 import { listAvailability } from '@/services/availability-service';
 import { listEquipment } from '@/services/equipment-service';
 import { getMyEditableProfile } from '@/services/profile-service';
+import {
+  getMyScoutingReport,
+  type ScoutingReport,
+} from '@/services/post-catch-review-service';
+import { buildScoutingSummary } from '@/services/post-catch-review-utils';
 import { formatMemberName } from '@/utils/member-name';
 
 type Setting = {
@@ -30,6 +35,14 @@ export default function ProfileScreen() {
   const [equipmentDetail, setEquipmentDetail] = useState('Nothing added yet');
   const [availabilityDetail, setAvailabilityDetail] = useState('Not set yet');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [scoutingReport, setScoutingReport] = useState<ScoutingReport>({
+    averageScore: null,
+    completedCatchCount: 0,
+    ratingCount: 0,
+    reliablePercent: 0,
+    topTraits: [],
+    wouldAgainPercent: 0,
+  });
   const displayName = profile
     ? formatMemberName(profile.firstName, profile.lastInitial)
     : 'Blake';
@@ -51,7 +64,8 @@ export default function ProfileScreen() {
         listEquipment(session.user.id),
         listAvailability(session.user.id),
         getMyEditableProfile(session.user.id),
-      ]).then(([equipment, availability, editableProfile]) => {
+        getMyScoutingReport(),
+      ]).then(([equipment, availability, editableProfile, scouting]) => {
         if (!active) return;
         if (!equipment.error) {
           const shareable = equipment.data.filter((item) => item.canShare).length;
@@ -75,6 +89,7 @@ export default function ProfileScreen() {
           );
         }
         if (!editableProfile.error) setPhotoUrl(editableProfile.data?.photoUrl ?? null);
+        if (!scouting.error) setScoutingReport(scouting.data);
       });
       return () => {
         active = false;
@@ -183,24 +198,36 @@ export default function ProfileScreen() {
         </View>
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{session ? '0' : '12'}</Text>
+            <Text style={styles.statValue}>{session ? scoutingReport.completedCatchCount : '12'}</Text>
             <Text style={styles.statLabel}>CATCHES</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{session ? 'NEW' : '98%'}</Text>
+            <Text style={styles.statValue}>
+              {session
+                ? scoutingReport.ratingCount
+                  ? `${scoutingReport.reliablePercent}%`
+                  : 'NEW'
+                : '98%'}
+            </Text>
             <Text style={styles.statLabel}>RELIABLE</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{session ? '—' : '100%'}</Text>
+            <Text style={styles.statValue}>
+              {session
+                ? scoutingReport.ratingCount
+                  ? `${scoutingReport.wouldAgainPercent}%`
+                  : '—'
+                : '100%'}
+            </Text>
             <Text style={styles.statLabel}>AGAIN</Text>
           </View>
         </View>
         <View style={styles.scouting}>
           <Text style={styles.scoutingText}>
             {session
-              ? '“Fresh arm. First scouting report coming after a completed catch.”'
+              ? `“${buildScoutingSummary(scoutingReport.ratingCount, scoutingReport.topTraits)}”`
               : '“Brings an extra glove. Doesn’t leave mates hanging.”'}
           </Text>
         </View>

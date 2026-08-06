@@ -62,7 +62,9 @@ a proposal creates an unlisted two-person Catch. Persistent Open to Catch listin
 now show compatible people using shared activities, day-specific broad availability,
 and area; newly posted Catches create matching in-app alerts. Remaining work is
 distance-weighted scoring, map mode, counter-proposal revisions, external
-invitations, and push-delivery operations.
+invitations, push-delivery operations, and an **Allow others to join** option
+for accepted direct proposals. For private locations, newly interested members
+must still be approved before the exact location is revealed.
 
 ### Phase 6 — messages and notifications
 
@@ -86,9 +88,14 @@ completed public Catches at public places can be shared with permission, names
 are separately opt-in, videos remain private, and reports hide photos pending
 review. Unified Catch History now combines completed Catches a member hosted or
 joined, with crew names, private-safe location labels, album counts, and previews
-from the original media records. This is deliberately not a generic follower/content feed. Remaining work is
-participant attendance/no-show confirmation, reliability events, rating
-eligibility and entry, athletic-rating visibility, equipment/venue reviews,
+from the original media records. This is deliberately not a generic follower/content feed.
+A uniform, editable post-Catch review is now available for planned, impromptu,
+and retroactive Catches. Every confirmed participant is prompted to review every
+other confirmed participant, Catch History supports later updates, raw responses
+remain private, and eligible structured ratings update the member's own scouting
+report. Remaining work is participant attendance/no-show confirmation,
+reliability events, scheduled reminder delivery, privacy-thresholded scouting
+reports for other members, athletic-rating visibility, equipment/venue reviews,
 and shareable Catch Cards.
 
 ### Phase 8 — safety and moderation

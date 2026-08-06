@@ -157,7 +157,8 @@ export default function CatchHistoryScreen() {
           <HistoryCard
             item={item}
             key={item.catchId}
-            onPress={() => router.push(`/catch-memories/${item.catchId}` as never)}
+            onOpenMemories={() => router.push(`/catch-memories/${item.catchId}` as never)}
+            onReview={() => router.push(`/post-catch-review/${item.catchId}` as never)}
           />
         ))}
       </View>
@@ -165,13 +166,20 @@ export default function CatchHistoryScreen() {
   );
 }
 
-function HistoryCard({ item, onPress }: { item: CatchHistoryItem; onPress: () => void }) {
+function HistoryCard({
+  item,
+  onOpenMemories,
+  onReview,
+}: {
+  item: CatchHistoryItem;
+  onOpenMemories: () => void;
+  onReview: () => void;
+}) {
   const totalMemories = item.photoCount + item.videoCount;
+  const reviewComplete =
+    item.reviewEligibleCount > 0 && item.reviewCompletedCount >= item.reviewEligibleCount;
   return (
-    <Pressable
-      accessibilityLabel={`Open memories for ${item.title}`}
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <View style={styles.card}>
       <View style={styles.cardHeading}>
         <View style={[styles.activityIcon, { backgroundColor: item.activityColor }]}>
           <Text style={styles.emoji}>{item.activityEmoji}</Text>
@@ -220,12 +228,28 @@ function HistoryCard({ item, onPress }: { item: CatchHistoryItem; onPress: () =>
               }`
             : 'Album ready'}
         </Text>
-        <View style={styles.openAction}>
+        <Pressable accessibilityLabel={`Open memories for ${item.title}`} onPress={onOpenMemories} style={styles.openAction}>
           <Text style={styles.openActionText}>Open memories</Text>
           <Ionicons color={colors.orangeDark} name="arrow-forward" size={17} />
-        </View>
+        </Pressable>
       </View>
-    </Pressable>
+      {item.reviewEligibleCount > 0 ? (
+        <Pressable
+          accessibilityLabel={`${reviewComplete ? 'Update' : 'Complete'} post-Catch review for ${item.title}`}
+          onPress={onReview}
+          style={[styles.reviewAction, reviewComplete && styles.reviewActionComplete]}>
+          <View style={styles.reviewActionText}>
+            <Text style={styles.reviewTitle}>{reviewComplete ? 'Review saved' : 'How did it go?'}</Text>
+            <Text style={styles.reviewBody}>
+              {reviewComplete
+                ? 'Return anytime to update your post-Catch review.'
+                : `Review ${item.reviewEligibleCount - item.reviewCompletedCount} Catch ${item.reviewEligibleCount - item.reviewCompletedCount === 1 ? 'Mate' : 'Mates'}.`}
+            </Text>
+          </View>
+          <Ionicons color={colors.forest} name={reviewComplete ? 'checkmark-circle' : 'clipboard-outline'} size={23} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -301,4 +325,9 @@ const styles = StyleSheet.create({
   memoryCount: { flexShrink: 1, color: colors.muted, fontSize: 10, fontWeight: '700' },
   openAction: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   openActionText: { color: colors.orangeDark, fontSize: 11, fontWeight: '900' },
+  reviewAction: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: colors.paleOrange, padding: 12 },
+  reviewActionComplete: { backgroundColor: colors.paleGreen },
+  reviewActionText: { flex: 1, gap: 2 },
+  reviewTitle: { color: colors.ink, fontSize: 12, fontWeight: '900' },
+  reviewBody: { color: colors.muted, fontSize: 9, lineHeight: 14 },
 });

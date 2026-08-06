@@ -352,14 +352,21 @@ function LiveCatchDetails({ id }: { id: string }) {
       {item.status === 'completed' && (isHost || approved) ? (
         <View style={styles.completionCard}>
           <View style={styles.completionHeading}>
-            <Ionicons color={colors.forest} name="images-outline" size={25} />
+            <Ionicons color={colors.forest} name="clipboard-outline" size={25} />
             <View style={styles.completionText}>
-              <Text style={styles.sectionTitle}>Catch Memories</Text>
+              <Text style={styles.sectionTitle}>Post-Catch check-in</Text>
               <Text style={styles.muted}>
                 Add photos or short videos today—or come back weeks from now.
               </Text>
             </View>
           </View>
+          <Button
+            icon="clipboard-outline"
+            label="Review Catch crew"
+            onPress={() =>
+              router.push(`/post-catch-review/${item.id}` as never)
+            }
+          />
           <Button
             icon="images-outline"
             label="Open Catch Memories"
