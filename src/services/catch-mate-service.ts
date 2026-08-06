@@ -29,6 +29,7 @@ export type DirectCatchProposal = {
   durationMinutes: number;
   id: string;
   message: string | null;
+  locationType: 'later' | 'catalog' | 'private';
   otherFirstName: string;
   otherUserId: string;
   startsAt: string;
@@ -42,6 +43,14 @@ export type DirectProposalInput = {
   areaLabel: string;
   durationMinutes: number;
   message: string;
+  locationType: 'later' | 'catalog' | 'private';
+  privateLocation: {
+    arrivalNotes: string | null;
+    exactAddress: string;
+    latitude: number | null;
+    longitude: number | null;
+    placeName: string;
+  } | null;
   recipientId: string;
   startsAt: string;
   venueId: string | null;
@@ -111,6 +120,12 @@ export async function createDirectCatchProposal(input: DirectProposalInput) {
     requested_area_label: input.areaLabel,
     requested_duration_minutes: input.durationMinutes,
     requested_message: input.message.trim() || null,
+    requested_location_type: input.locationType,
+    requested_private_place_name: input.privateLocation?.placeName.trim() ?? null,
+    requested_exact_address: input.privateLocation?.exactAddress.trim() ?? null,
+    requested_arrival_notes: input.privateLocation?.arrivalNotes?.trim() || null,
+    requested_latitude: input.privateLocation?.latitude ?? null,
+    requested_longitude: input.privateLocation?.longitude ?? null,
     requested_recipient_id: input.recipientId,
     requested_starts_at: input.startsAt,
     requested_venue_id: input.venueId,
@@ -136,6 +151,7 @@ export async function listDirectCatchProposals() {
       direction: DirectCatchProposal['direction'];
       duration_minutes: number;
       message: string | null;
+      location_type: DirectCatchProposal['locationType'];
       other_first_name: string;
       other_user_id: string;
       proposal_id: string;
@@ -158,6 +174,7 @@ export async function listDirectCatchProposals() {
       durationMinutes: row.duration_minutes,
       id: row.proposal_id,
       message: row.message,
+      locationType: row.location_type,
       otherFirstName: row.other_first_name,
       otherUserId: row.other_user_id,
       startsAt: row.starts_at,

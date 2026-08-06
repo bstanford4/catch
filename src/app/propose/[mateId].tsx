@@ -59,8 +59,13 @@ export default function ProposeCatchScreen() {
   const [activities, setActivities] = useState<CatchCatalogActivity[]>([]);
   const [venues, setVenues] = useState<CatchVenue[]>([]);
   const [activityId, setActivityId] = useState('');
+  const [locationType, setLocationType] = useState<'later' | 'catalog' | 'private'>('later');
   const [venueId, setVenueId] = useState<string | null>(null);
   const [areaLabel, setAreaLabel] = useState(profile?.areaLabel ?? '');
+  const [privatePlaceName, setPrivatePlaceName] = useState('');
+  const [privateAddress, setPrivateAddress] = useState('');
+  const [privateArrivalNotes, setPrivateArrivalNotes] = useState('');
+  const [privateConfirmed, setPrivateConfirmed] = useState(false);
   const [dateValue, setDateValue] = useState(dateInputValue(initialStart));
   const [timeValue, setTimeValue] = useState(timeInputValue(initialStart));
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -108,13 +113,38 @@ export default function ProposeCatchScreen() {
       setError('Enter a broad meeting area.');
       return;
     }
+    if (locationType === 'private') {
+      if (!privatePlaceName.trim()) {
+        setError('Enter a name for the private meeting place.');
+        return;
+      }
+      if (privateAddress.trim().length < 3) {
+        setError('Enter the exact address or precise meeting instructions.');
+        return;
+      }
+      if (!privateConfirmed) {
+        setError('Confirm that the exact location may be shared after the proposal is accepted.');
+        return;
+      }
+    }
     setIsSaving(true);
     setError('');
     const result = await createDirectCatchProposal({
       activityTypeId: activityId,
       areaLabel,
       durationMinutes,
+      locationType,
       message,
+      privateLocation:
+        locationType === 'private'
+          ? {
+              arrivalNotes: privateArrivalNotes.trim() || null,
+              exactAddress: privateAddress,
+              latitude: null,
+              longitude: null,
+              placeName: privatePlaceName,
+            }
+          : null,
       recipientId: mateId,
       startsAt: startsAt.toISOString(),
       venueId,
@@ -198,25 +228,46 @@ export default function ProposeCatchScreen() {
       <View style={styles.venueList}>
         <Pressable
           accessibilityRole="radio"
-          accessibilityState={{ checked: venueId === null }}
-          onPress={() => setVenueId(null)}
-          style={[styles.venue, venueId === null && styles.venueSelected]}>
-          <View style={[styles.radio, venueId === null && styles.radioSelected]}>
-            {venueId === null ? <View style={styles.radioDot} /> : null}
+          accessibilityState={{ checked: locationType === 'later' }}
+          onPress={() => {
+            setLocationType('later');
+            setVenueId(null);
+          }}
+          style={[styles.venue, locationType === 'later' && styles.venueSelected]}>
+          <View style={[styles.radio, locationType === 'later' && styles.radioSelected]}>
+            {locationType === 'later' ? <View style={styles.radioDot} /> : null}
           </View>
           <View style={styles.venueText}>
             <Text style={styles.venueName}>Decide together later</Text>
             <Text style={styles.venueArea}>Start with a broad area</Text>
           </View>
         </Pressable>
+        <Pressable
+          accessibilityRole="radio"
+          accessibilityState={{ checked: locationType === 'private' }}
+          onPress={() => {
+            setLocationType('private');
+            setVenueId(null);
+          }}
+          style={[styles.venue, locationType === 'private' && styles.venueSelected]}>
+          <View style={[styles.radio, locationType === 'private' && styles.radioSelected]}>
+            {locationType === 'private' ? <View style={styles.radioDot} /> : null}
+          </View>
+          <View style={styles.venueText}>
+            <Text style={styles.venueName}>Private / informal location</Text>
+            <Text style={styles.venueArea}>Exact details unlock only after acceptance</Text>
+          </View>
+          <Ionicons color={colors.forest} name="lock-closed-outline" size={19} />
+        </Pressable>
         {venues.map((venue) => {
-          const selected = venue.id === venueId;
+          const selected = locationType === 'catalog' && venue.id === venueId;
           return (
             <Pressable
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               key={venue.id}
               onPress={() => {
+                setLocationType('catalog');
                 setVenueId(venue.id);
                 setAreaLabel(venue.areaLabel);
               }}
@@ -242,6 +293,62 @@ export default function ProposeCatchScreen() {
         style={styles.input}
         value={areaLabel}
       />
+      {locationType === 'private' ? (
+        <View style={styles.privateFields}>
+          <View style={styles.privateNotice}>
+            <Ionicons color={colors.forest} name="shield-checkmark" size={20} />
+            <Text style={styles.privateNoticeText}>
+              {name} sees only the broad area before accepting. The exact location is encrypted
+              and unlocks inside the accepted Catch.
+            </Text>
+          </View>
+          <Text style={styles.smallLabel}>Private place name</Text>
+          <TextInput
+            accessibilityLabel="Proposal private place name"
+            maxLength={100}
+            onChangeText={setPrivatePlaceName}
+            placeholder="e.g. Blake's driveway hoop"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={privatePlaceName}
+          />
+          <Text style={styles.smallLabel}>Exact address or meeting instructions</Text>
+          <TextInput
+            accessibilityLabel="Proposal private exact address"
+            maxLength={300}
+            onChangeText={setPrivateAddress}
+            placeholder="Street address or precise meeting point"
+            placeholderTextColor={colors.muted}
+            style={styles.input}
+            value={privateAddress}
+          />
+          <Text style={styles.smallLabel}>Arrival notes (optional)</Text>
+          <TextInput
+            accessibilityLabel="Proposal private arrival notes"
+            maxLength={500}
+            multiline
+            onChangeText={setPrivateArrivalNotes}
+            placeholder="e.g. Use the side gate"
+            placeholderTextColor={colors.muted}
+            style={styles.privateNotes}
+            value={privateArrivalNotes}
+          />
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: privateConfirmed }}
+            onPress={() => setPrivateConfirmed((current) => !current)}
+            style={styles.confirmRow}>
+            <Ionicons
+              color={colors.forest}
+              name={privateConfirmed ? 'checkbox' : 'square-outline'}
+              size={24}
+            />
+            <Text style={styles.confirmText}>
+              Share these exact details with {name} only after acceptance.
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Message (optional)</Text>
       <TextInput
@@ -266,7 +373,10 @@ export default function ProposeCatchScreen() {
                 hour: 'numeric',
                 minute: '2-digit',
               }).format(startsAt)} · ${durationMinutes} min · ${
-                selectedVenue?.name ?? `${areaLabel || 'broad area'}, exact spot later`
+                selectedVenue?.name ??
+                (locationType === 'private'
+                  ? `${areaLabel || 'broad area'} · private spot unlocks after acceptance`
+                  : `${areaLabel || 'broad area'}, exact spot later`)
               }`
             : 'Enter a valid date and time'}
         </Text>
@@ -347,6 +457,31 @@ const styles = StyleSheet.create({
   venueText: { flex: 1, gap: 2 },
   venueName: { color: colors.ink, fontSize: 13, fontWeight: '800' },
   venueArea: { color: colors.muted, fontSize: 10 },
+  privateFields: { gap: 2, marginTop: 8 },
+  privateNotice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    marginBottom: 6,
+    borderRadius: radius.md,
+    backgroundColor: colors.paleGreen,
+    padding: 12,
+  },
+  privateNoticeText: { flex: 1, color: colors.forest, fontSize: 11, lineHeight: 17 },
+  privateNotes: {
+    minHeight: 78,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    color: colors.ink,
+    fontSize: 14,
+    lineHeight: 20,
+    padding: 13,
+    textAlignVertical: 'top',
+  },
+  confirmRow: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: 48 },
+  confirmText: { flex: 1, color: colors.ink, fontSize: 11, lineHeight: 16 },
   message: {
     minHeight: 95,
     borderWidth: 1,

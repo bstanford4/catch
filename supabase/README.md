@@ -65,15 +65,21 @@ The local Expo demo does not require Supabase. To enable the backend:
 21. Run `migrations/202608020019_unified_catch_history.sql` once. It adds a
     private unified history for completed Catches the caller hosted or joined,
     summarizing the existing Catch Memories album without copying its media.
-22. Run `seed.sql` for catalog and public-venue demo records.
-23. Copy `.env.example` to `.env` and add the project URL and client-safe
+22. Run `migrations/202608020020_past_catches_rugby_friend_codes.sql` once. It
+    adds retroactive completed Catches, Rugby catalog support, attendance
+    confirmations, and the repaired reusable Catch Mate code function.
+23. Run `migrations/202608050021_private_direct_proposal_locations.sql` once.
+    It adds encrypted private locations to direct Catch Mate proposals. Pending
+    proposals expose only the broad area; exact details unlock after acceptance.
+24. Run `seed.sql` for catalog and public-venue demo records.
+25. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-24. Add `catch://**` to the project's Auth redirect URLs.
-25. Link the app to Expo EAS, put its project ID in
+26. Add `catch://**` to the project's Auth redirect URLs.
+27. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-26. Restart Expo so client environment variables are rebundled.
+28. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

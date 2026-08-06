@@ -188,8 +188,17 @@ function ProposalCard({
           <Text style={styles.meta}>{start} · {item.durationMinutes} min</Text>
         </View>
         <View style={styles.metaRow}>
-          <Ionicons color={colors.forestSoft} name="location-outline" size={15} />
-          <Text style={styles.meta}>{item.venueName ?? `${item.areaLabel} · exact spot later`}</Text>
+          <Ionicons
+            color={colors.forestSoft}
+            name={item.locationType === 'private' ? 'lock-closed-outline' : 'location-outline'}
+            size={15}
+          />
+          <Text style={styles.meta}>
+            {item.venueName ??
+              (item.locationType === 'private'
+                ? `${item.areaLabel} · private spot unlocks after acceptance`
+                : `${item.areaLabel} · exact spot later`)}
+          </Text>
         </View>
         {item.message ? <Text style={styles.message}>&ldquo;{item.message}&rdquo;</Text> : null}
         {onAccept && onDecline ? (
