@@ -75,15 +75,20 @@ The local Expo demo does not require Supabase. To enable the backend:
     uniform, editable post-Catch review form for planned, impromptu, and
     retroactive Catches, plus private raw ratings and the member's own aggregate
     scouting report.
-25. Run `seed.sql` for catalog and public-venue demo records.
-26. Copy `.env.example` to `.env` and add the project URL and client-safe
+25. Run `migrations/202608060023_shareable_equipment_photos.sql` once. It lets
+    connected members see the photo attached to explicitly shareable gear while
+    retaining owner-only access for every unshared item. It also adds connected
+    member Catch Cards whose aggregate feedback unlocks only after reviews from
+    at least three distinct people; raw ratings and notes remain private.
+26. Run `seed.sql` for catalog and public-venue demo records.
+27. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-27. Add `catch://**` to the project's Auth redirect URLs.
-28. Link the app to Expo EAS, put its project ID in
+28. Add `catch://**` to the project's Auth redirect URLs.
+29. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-29. Restart Expo so client environment variables are rebundled.
+30. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

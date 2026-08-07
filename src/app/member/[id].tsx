@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -26,6 +28,7 @@ import {
   reportParticipant,
 } from '@/services/participant-profile-service';
 import { memberInitials } from '@/utils/member-name';
+import { buildScoutingSummary } from '@/services/post-catch-review-utils';
 
 export default function ParticipantProfileScreen() {
   const { id = '' } = useLocalSearchParams<{ id: string }>();
@@ -213,6 +216,52 @@ export default function ParticipantProfileScreen() {
         )}
       </View>
 
+      <LinearGradient colors={['#153B29', '#2C6547']} style={styles.catchCard}>
+        <View style={styles.catchCardHeading}>
+          <View>
+            <Text style={styles.catchCardEyebrow}>CATCH CARD</Text>
+            <Text style={styles.catchCardName}>{profile.firstName}’s scouting report</Text>
+          </View>
+          <Text style={styles.catchCardMark}>C</Text>
+        </View>
+        <View style={styles.catchStats}>
+          <View style={styles.catchStat}>
+            <Text style={styles.catchStatValue}>{profile.scoutingReport.completedCatchCount}</Text>
+            <Text style={styles.catchStatLabel}>CATCHES</Text>
+          </View>
+          <View style={styles.catchStatDivider} />
+          <View style={styles.catchStat}>
+            <Text style={styles.catchStatValue}>
+              {profile.scoutingReport.hasEnoughReviews
+                ? `${profile.scoutingReport.reliablePercent}%`
+                : 'NEW'}
+            </Text>
+            <Text style={styles.catchStatLabel}>RELIABLE</Text>
+          </View>
+          <View style={styles.catchStatDivider} />
+          <View style={styles.catchStat}>
+            <Text style={styles.catchStatValue}>
+              {profile.scoutingReport.hasEnoughReviews
+                ? `${profile.scoutingReport.wouldAgainPercent}%`
+                : '—'}
+            </Text>
+            <Text style={styles.catchStatLabel}>AGAIN</Text>
+          </View>
+        </View>
+        <View style={styles.scoutingCopy}>
+          <Text style={styles.scoutingText}>
+            {!profile.scoutingReport.isVisible
+              ? 'This Catch Mate keeps their scouting report private.'
+              : profile.scoutingReport.hasEnoughReviews
+                ? buildScoutingSummary(
+                    profile.scoutingReport.reviewerCount,
+                    profile.scoutingReport.topTraits,
+                  )
+                : 'Scouting report building. Aggregates appear after reviews from a few different Catch Mates.'}
+          </Text>
+        </View>
+      </LinearGradient>
+
       <ProfileSection icon="person-outline" title="About">
         <Text style={styles.body}>
           {profile.bio?.trim() || 'No bio yet—just someone ready for a good Catch.'}
@@ -250,13 +299,53 @@ export default function ParticipantProfileScreen() {
         )}
       </ProfileSection>
 
-      <ProfileSection icon="bag-handle-outline" title="Shareable equipment">
+      <ProfileSection icon="bag-handle-outline" title="Gear Locker">
+        <Text style={styles.sectionIntro}>
+          Gear {profile.firstName} marked available to share. Tap an item for details.
+        </Text>
         {profile.shareableEquipment.length ? (
           profile.shareableEquipment.map((item) => (
-            <View key={item} style={styles.equipmentRow}>
-              <Ionicons color={colors.forest} name="checkmark-circle" size={16} />
-              <Text style={styles.body}>{item}</Text>
-            </View>
+            <Pressable
+              accessibilityHint="Opens this item in the gear locker"
+              accessibilityLabel={`View ${item.name}`}
+              key={item.id}
+              onPress={() =>
+                router.push({
+                  pathname: '/member/[id]/equipment/[equipmentId]',
+                  params: {
+                    equipmentId: item.id,
+                    id: profile.userId,
+                    name: profile.firstName,
+                  },
+                })
+              }
+              style={({ pressed }) => [styles.equipmentCard, pressed && styles.equipmentCardPressed]}>
+              {item.photoUrl ? (
+                <Image
+                  accessibilityLabel={`${item.name} equipment photo`}
+                  contentFit="cover"
+                  source={item.photoUrl}
+                  style={styles.equipmentPhoto}
+                  transition={180}
+                />
+              ) : (
+                <View style={[styles.equipmentPhoto, styles.equipmentPlaceholder, { backgroundColor: item.activityColor }]}>
+                  <Text style={styles.equipmentEmoji}>{item.activityEmoji}</Text>
+                </View>
+              )}
+              <View style={styles.equipmentDetails}>
+                <View style={styles.equipmentTitleRow}>
+                  <Text style={styles.equipmentName}>{item.name}</Text>
+                  <Ionicons color={colors.forest} name="chevron-forward" size={18} />
+                </View>
+                <Text style={styles.equipmentMeta}>
+                  {item.activityName}
+                  {item.condition ? ` · ${item.condition}` : ''}
+                  {item.quantity > 1 ? ` · ${item.quantity} available` : ''}
+                </Text>
+                <Text style={styles.equipmentShared}>Marked available to share</Text>
+              </View>
+            </Pressable>
           ))
         ) : (
           <Text style={styles.muted}>No equipment marked as shareable.</Text>
@@ -357,6 +446,18 @@ const styles = StyleSheet.create({
   },
   connectionText: { flex: 1, color: colors.forest, fontSize: 11, lineHeight: 16 },
   actions: { gap: 9, marginTop: spacing.lg },
+  catchCard: { overflow: 'hidden', marginTop: spacing.lg, borderRadius: 25, padding: 20 },
+  catchCardHeading: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  catchCardEyebrow: { color: colors.gold, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
+  catchCardName: { marginTop: 3, color: colors.white, fontSize: 18, fontWeight: '800' },
+  catchCardMark: { color: 'rgba(255,255,255,0.15)', fontSize: 45, fontWeight: '900', lineHeight: 46 },
+  catchStats: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', marginTop: 22 },
+  catchStat: { alignItems: 'center', gap: 3 },
+  catchStatValue: { color: colors.white, fontSize: 23, fontWeight: '900' },
+  catchStatLabel: { color: '#BDD1C3', fontSize: 9, fontWeight: '800', letterSpacing: 0.8 },
+  catchStatDivider: { width: 1, height: 37, backgroundColor: 'rgba(255,255,255,0.17)' },
+  scoutingCopy: { marginTop: 17, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.09)', padding: 11 },
+  scoutingText: { color: '#E7F0E9', fontSize: 12, lineHeight: 18, fontStyle: 'italic' },
   section: {
     gap: 11,
     marginTop: spacing.lg,
@@ -368,6 +469,7 @@ const styles = StyleSheet.create({
   },
   sectionHeading: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '900' },
+  sectionIntro: { color: colors.muted, fontSize: 10, lineHeight: 15 },
   body: { color: colors.ink, fontSize: 13, lineHeight: 19 },
   muted: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
@@ -390,7 +492,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   availabilityText: { color: colors.forest, fontSize: 10, fontWeight: '800' },
-  equipmentRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  equipmentCard: { overflow: 'hidden', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, backgroundColor: colors.cream },
+  equipmentCardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
+  equipmentPhoto: { width: '100%', height: 150 },
+  equipmentPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  equipmentEmoji: { fontSize: 44 },
+  equipmentDetails: { gap: 3, padding: 12 },
+  equipmentTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  equipmentName: { flexShrink: 1, color: colors.ink, fontSize: 15, fontWeight: '900' },
+  equipmentMeta: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  equipmentShared: { color: colors.forest, fontSize: 9, fontWeight: '800' },
   safety: {
     gap: 9,
     marginTop: spacing.xl,

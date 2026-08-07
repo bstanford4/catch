@@ -48,6 +48,7 @@ export default function RootLayout() {
           <Stack.Screen name="sign-in" options={{ title: 'Welcome to Catch' }} />
           <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           <Stack.Screen name="equipment" options={{ title: 'Equipment' }} />
+          <Stack.Screen name="member/[id]/equipment/[equipmentId]" options={{ title: 'Gear Locker' }} />
           <Stack.Screen name="edit-profile" options={{ title: 'Edit profile' }} />
           <Stack.Screen name="availability" options={{ title: 'Availability' }} />
           <Stack.Screen name="notification-settings" options={{ title: 'Notifications' }} />

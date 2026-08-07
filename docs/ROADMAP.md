@@ -30,8 +30,10 @@ equipment persist to Supabase. Equipment supports optional compressed camera or
 photo-library images in a private owner-scoped Storage bucket. Remaining work is
 editable first name, bio, activities, and private profile photos are now
 implemented. An optional last initial distinguishes members without collecting
-full last names. Remaining work is expanded privacy settings, account deletion,
-and additional contextual permissions.
+full last names. Explicitly shareable equipment now includes its authorized photo
+on connected participant profiles; unshared gear remains owner-only. Remaining
+work is expanded privacy settings, account deletion, and additional contextual
+permissions.
 
 ### Phase 3 — venues and location
 
@@ -93,10 +95,11 @@ A uniform, editable post-Catch review is now available for planned, impromptu,
 and retroactive Catches. Every confirmed participant is prompted to review every
 other confirmed participant, Catch History supports later updates, raw responses
 remain private, and eligible structured ratings update the member's own scouting
-report. Remaining work is participant attendance/no-show confirmation,
-reliability events, scheduled reminder delivery, privacy-thresholded scouting
-reports for other members, athletic-rating visibility, equipment/venue reviews,
-and shareable Catch Cards.
+report. Privacy-thresholded Catch Mate scouting reports are also visible to
+connected members after reviews from at least three distinct people; raw answers
+and private notes remain private. Remaining work is participant attendance/no-show
+confirmation, reliability events, scheduled reminder delivery, athletic-rating
+visibility, equipment/venue reviews, and shareable Catch Cards.
 
 ### Phase 8 — safety and moderation
 

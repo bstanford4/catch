@@ -10,6 +10,27 @@ export type CatchParticipant = {
   userId: string;
 };
 
+export type ShareableEquipment = {
+  activityColor: string;
+  activityEmoji: string;
+  activityName: string;
+  condition: string | null;
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  quantity: number;
+};
+
+export type ParticipantScoutingReport = {
+  completedCatchCount: number;
+  hasEnoughReviews: boolean;
+  isVisible: boolean;
+  reliablePercent: number;
+  reviewerCount: number;
+  topTraits: string[];
+  wouldAgainPercent: number;
+};
+
 export type ParticipantProfile = {
   activities: {
     color: string;
@@ -24,9 +45,65 @@ export type ParticipantProfile = {
   firstName: string;
   isCatchMate: boolean;
   photoUrl: string | null;
-  shareableEquipment: string[];
+  scoutingReport: ParticipantScoutingReport;
+  shareableEquipment: ShareableEquipment[];
   userId: string;
 };
+
+type ParticipantEquipmentRow = {
+  activity_emoji: string | null;
+  activity_name: string;
+  activity_slug: string;
+  condition: string | null;
+  equipment_id: string;
+  equipment_name: string;
+  photo_path: string | null;
+  quantity: number;
+};
+
+type ParticipantScoutingRow = {
+  catch_card_visible: boolean;
+  completed_catch_count: number | string;
+  reliable_percent: number | string;
+  reviewer_count: number | string;
+  top_traits: string[] | null;
+  would_again_percent: number | string;
+};
+
+async function createEquipmentPhotoUrl(path: string | null) {
+  if (!supabase || !path) return null;
+  const { data, error } = await supabase.storage
+    .from('equipment-photos')
+    .createSignedUrl(path, 60 * 60);
+  return error ? null : data.signedUrl;
+}
+
+async function mapParticipantEquipment(item: ParticipantEquipmentRow): Promise<ShareableEquipment> {
+  return {
+    activityColor: getActivityColor(item.activity_slug),
+    activityEmoji: getActivityEmoji(item.activity_slug, item.activity_emoji),
+    activityName: item.activity_name,
+    condition: item.condition,
+    id: item.equipment_id,
+    name: item.equipment_name,
+    photoUrl: await createEquipmentPhotoUrl(item.photo_path),
+    quantity: item.quantity,
+  };
+}
+
+export async function listParticipantShareableEquipment(userId: string) {
+  if (!supabase) {
+    return { data: [] as ShareableEquipment[], error: 'Supabase is not configured.' };
+  }
+  const { data, error } = await supabase.rpc('list_participant_shareable_equipment', {
+    requested_user_id: userId,
+  });
+  if (error) return { data: [] as ShareableEquipment[], error: error.message };
+  return {
+    data: await Promise.all(((data ?? []) as ParticipantEquipmentRow[]).map(mapParticipantEquipment)),
+    error: null,
+  };
+}
 
 type ParticipantProfileRow = {
   activity_emojis: string[];
@@ -70,11 +147,17 @@ export async function listCatchParticipants(catchId: string) {
 
 export async function getParticipantProfile(userId: string) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
-  const [{ data, error }, photoResult] = await Promise.all([
+  const [{ data, error }, photoResult, equipmentResult, scoutingResult] = await Promise.all([
     supabase.rpc('get_participant_profile', {
       requested_user_id: userId,
     }),
     supabase.rpc('get_participant_profile_photo_path', {
+      requested_user_id: userId,
+    }),
+    supabase.rpc('list_participant_shareable_equipment', {
+      requested_user_id: userId,
+    }),
+    supabase.rpc('get_participant_scouting_report', {
       requested_user_id: userId,
     }),
   ]);
@@ -83,6 +166,20 @@ export async function getParticipantProfile(userId: string) {
   if (!row) return { data: null, error: 'Participant profile not found.' };
   const photoPath =
     photoResult.error || typeof photoResult.data !== 'string' ? null : photoResult.data;
+  const shareableEquipment = equipmentResult.error
+    ? (row.shareable_equipment ?? []).map((name, index) => ({
+        activityColor: getActivityColor('other'),
+        activityEmoji: getActivityEmoji('other', null),
+        activityName: 'Equipment',
+        condition: null,
+        id: `legacy-${index}-${name}`,
+        name,
+        photoUrl: null,
+        quantity: 1,
+      }))
+    : await Promise.all(
+        ((equipmentResult.data ?? []) as ParticipantEquipmentRow[]).map(mapParticipantEquipment),
+      );
   return {
     data: {
       activities: row.activity_names.map((name, index) => {
@@ -101,10 +198,30 @@ export async function getParticipantProfile(userId: string) {
       firstName: row.first_name,
       isCatchMate: row.is_catch_mate,
       photoUrl: await createProfilePhotoUrl(photoPath),
-      shareableEquipment: row.shareable_equipment ?? [],
+      scoutingReport: mapParticipantScoutingReport(
+        scoutingResult.error
+          ? null
+          : ((scoutingResult.data?.[0] ?? null) as ParticipantScoutingRow | null),
+      ),
+      shareableEquipment,
       userId: row.user_id,
     } satisfies ParticipantProfile,
     error: null,
+  };
+}
+
+function mapParticipantScoutingReport(
+  row: ParticipantScoutingRow | null,
+): ParticipantScoutingReport {
+  const reviewerCount = Number(row?.reviewer_count ?? 0);
+  return {
+    completedCatchCount: Number(row?.completed_catch_count ?? 0),
+    hasEnoughReviews: Boolean(row?.catch_card_visible) && reviewerCount >= 3,
+    isVisible: row?.catch_card_visible ?? true,
+    reliablePercent: Number(row?.reliable_percent ?? 0),
+    reviewerCount,
+    topTraits: row?.top_traits ?? [],
+    wouldAgainPercent: Number(row?.would_again_percent ?? 0),
   };
 }
 
