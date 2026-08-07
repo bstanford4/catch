@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   catchPlanTimestamp,
+  canRespondToProposal,
   conversationPeopleLabel,
   messageTimestamp,
   normalizeMessageBody,
@@ -38,6 +39,13 @@ describe('message timestamps', () => {
 });
 
 describe('conversation context', () => {
+  it('only lets the recipient decide a pending proposal', () => {
+    expect(canRespondToProposal('received', 'pending')).toBe(true);
+    expect(canRespondToProposal('sent', 'pending')).toBe(false);
+    expect(canRespondToProposal('received', 'accepted')).toBe(false);
+    expect(canRespondToProposal(undefined, undefined)).toBe(false);
+  });
+
   it('shows the other Catch participants when known', () => {
     expect(conversationPeopleLabel('John')).toBe('With John');
     expect(conversationPeopleLabel('John, Ben')).toBe('With John, Ben');

@@ -53,3 +53,10 @@ export function conversationPeopleLabel(otherFirstName: string) {
     ? 'No catcher joined yet'
     : `With ${normalized}`;
 }
+
+export function canRespondToProposal(
+  direction: 'sent' | 'received' | undefined,
+  status: string | undefined,
+) {
+  return direction === 'received' && status === 'pending';
+}

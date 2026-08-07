@@ -17,10 +17,16 @@ import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, spacing } from '@/constants/theme';
 import {
+  canRespondToProposal,
   conversationPeopleLabel,
   messageTimestamp,
   validateMessageBody,
 } from '@/services/message-utils';
+import {
+  type DirectCatchProposal,
+  decideDirectCatchProposal,
+  listDirectCatchProposals,
+} from '@/services/catch-mate-service';
 import {
   type MessageThread,
   type MessageThreadType,
@@ -40,9 +46,11 @@ export default function MessageThreadScreen() {
     params.type === 'proposal' ? 'proposal' : params.type === 'direct' ? 'direct' : 'catch';
   const [thread, setThread] = useState<MessageThread | null>(null);
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
+  const [proposal, setProposal] = useState<DirectCatchProposal | null>(null);
   const [draft, setDraft] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isDeciding, setIsDeciding] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -50,11 +58,18 @@ export default function MessageThreadScreen() {
       listMessageThreads(),
       listThreadMessages(type, id),
     ]);
+    const proposalResult =
+      type === 'proposal'
+        ? await listDirectCatchProposals()
+        : { data: [] as DirectCatchProposal[], error: null };
     setThread(
       threadResult.data.find((item) => item.type === type && item.id === id) ?? null,
     );
     setMessages(messageResult.data);
-    setError(threadResult.error ?? messageResult.error ?? '');
+    setProposal(
+      proposalResult.data.find((item: DirectCatchProposal) => item.id === id) ?? null,
+    );
+    setError(threadResult.error ?? messageResult.error ?? proposalResult.error ?? '');
     setIsLoading(false);
     if (!messageResult.error) void markMessageThreadRead(type, id);
   }, [id, type]);
@@ -89,6 +104,24 @@ export default function MessageThreadScreen() {
     }
     setDraft('');
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await load();
+  }
+
+  async function decideProposal(approve: boolean) {
+    if (!proposal || !canRespondToProposal(proposal.direction, proposal.status)) return;
+    setIsDeciding(true);
+    setError('');
+    const result = await decideDirectCatchProposal(proposal.id, approve);
+    setIsDeciding(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (approve && result.data) {
+      router.replace({ pathname: '/catch/[id]', params: { id: result.data } });
+      return;
+    }
     await load();
   }
 
@@ -178,6 +211,52 @@ export default function MessageThreadScreen() {
               : 'Keep exact private locations inside this approved conversation.'}
           </Text>
         </View>
+
+        {thread.type === 'proposal' && proposal?.status === 'pending' ? (
+          canRespondToProposal(proposal.direction, proposal.status) ? (
+            <View style={styles.decisionCard}>
+              <View style={styles.decisionHeading}>
+                <View style={styles.decisionIcon}>
+                  <Ionicons color={colors.orangeDark} name="paper-plane-outline" size={21} />
+                </View>
+                <View style={styles.decisionText}>
+                  <Text style={styles.decisionTitle}>Ready to Catch?</Text>
+                  <Text style={styles.decisionBody}>
+                    Accept to create the Catch, or decline if this plan does not work.
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.decisionActions}>
+                <Pressable
+                  accessibilityLabel="Decline Catch proposal"
+                  disabled={isDeciding}
+                  onPress={() => decideProposal(false)}
+                  style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}>
+                  <Text style={styles.declineText}>Decline</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Accept Catch proposal"
+                  disabled={isDeciding}
+                  onPress={() => decideProposal(true)}
+                  style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}>
+                  {isDeciding ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Ionicons color={colors.white} name="checkmark" size={18} />
+                  )}
+                  <Text style={styles.acceptText}>{isDeciding ? 'Saving...' : 'Accept'}</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.waitingCard}>
+              <Ionicons color={colors.forest} name="time-outline" size={20} />
+              <Text style={styles.waitingText}>
+                Waiting for {proposal.otherFirstName} to accept or decline this proposal.
+              </Text>
+            </View>
+          )
+        ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <View style={styles.messageList}>
@@ -302,6 +381,19 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   privacyText: { flex: 1, color: colors.forest, fontSize: 11, lineHeight: 16 },
+  decisionCard: { gap: 12, marginTop: spacing.md, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.paper, padding: 14 },
+  decisionHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  decisionIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 13, backgroundColor: colors.paleOrange },
+  decisionText: { flex: 1, gap: 2 },
+  decisionTitle: { color: colors.ink, fontSize: 16, fontWeight: '900' },
+  decisionBody: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  decisionActions: { flexDirection: 'row', gap: 8 },
+  declineButton: { flex: 1, minHeight: 46, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md },
+  declineText: { color: colors.error, fontSize: 12, fontWeight: '900' },
+  acceptButton: { flex: 1, minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: radius.md, backgroundColor: colors.orange },
+  acceptText: { color: colors.white, fontSize: 12, fontWeight: '900' },
+  waitingCard: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: spacing.md, borderRadius: radius.md, backgroundColor: colors.paleOrange, padding: 12 },
+  waitingText: { flex: 1, color: colors.forest, fontSize: 11, lineHeight: 16, fontWeight: '700' },
   error: { marginTop: spacing.md, color: colors.error, fontSize: 12, textAlign: 'center' },
   messageList: { gap: 9, marginTop: spacing.lg },
   bubbleRow: { flexDirection: 'row', justifyContent: 'flex-start' },
