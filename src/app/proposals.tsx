@@ -200,6 +200,14 @@ function ProposalCard({
                 : `${item.areaLabel} · exact spot later`)}
           </Text>
         </View>
+        {item.allowOthersToJoin ? (
+          <View style={styles.openBadge}>
+            <Ionicons color={colors.forest} name="people-outline" size={14} />
+            <Text style={styles.openBadgeText}>
+              OPEN TO REQUESTS · UP TO {item.maximumParticipants}
+            </Text>
+          </View>
+        ) : null}
         {item.message ? <Text style={styles.message}>&ldquo;{item.message}&rdquo;</Text> : null}
         {onAccept && onDecline ? (
           <View style={styles.actions}>
@@ -288,6 +296,17 @@ const styles = StyleSheet.create({
   cardTitle: { color: colors.ink, fontSize: 16, fontWeight: '900' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   meta: { flex: 1, color: colors.muted, fontSize: 11, lineHeight: 16 },
+  openBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.paleGreen,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  openBadgeText: { color: colors.forest, fontSize: 8, fontWeight: '900', letterSpacing: 0.5 },
   message: { color: colors.ink, fontSize: 11, lineHeight: 16, fontStyle: 'italic' },
   actions: { flexDirection: 'row', gap: 9, marginTop: 4 },
   declineButton: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 42 },

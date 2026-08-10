@@ -83,15 +83,20 @@ The local Expo demo does not require Supabase. To enable the backend:
 26. Run `migrations/202608060024_fix_shareable_equipment_photo_policy.sql` once.
     It fixes the connected-viewer photo check without changing which equipment
     is eligible to be shared.
-27. Run `seed.sql` for catalog and public-venue demo records.
-28. Copy `.env.example` to `.env` and add the project URL and client-safe
+27. Run `migrations/202608060025_attendance_and_open_direct_catches.sql` once.
+    It adds private attendance/no-show confirmations for completed planned
+    Catches, opt-in approval-gated discovery for accepted direct proposals, and
+    recipient-controlled shared feedback that is private by default and can be
+    featured anonymously on a participant profile.
+28. Run `seed.sql` for catalog and public-venue demo records.
+29. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-29. Add `catch://**` to the project's Auth redirect URLs.
-30. Link the app to Expo EAS, put its project ID in
+30. Add `catch://**` to the project's Auth redirect URLs.
+31. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-31. Restart Expo so client environment variables are rebundled.
+32. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 

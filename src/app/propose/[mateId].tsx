@@ -69,6 +69,8 @@ export default function ProposeCatchScreen() {
   const [dateValue, setDateValue] = useState(dateInputValue(initialStart));
   const [timeValue, setTimeValue] = useState(timeInputValue(initialStart));
   const [durationMinutes, setDurationMinutes] = useState(60);
+  const [allowOthersToJoin, setAllowOthersToJoin] = useState(false);
+  const [maximumParticipants, setMaximumParticipants] = useState(4);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -131,10 +133,12 @@ export default function ProposeCatchScreen() {
     setError('');
     const result = await createDirectCatchProposal({
       activityTypeId: activityId,
+      allowOthersToJoin,
       areaLabel,
       durationMinutes,
       locationType,
       message,
+      maximumParticipants,
       privateLocation:
         locationType === 'private'
           ? {
@@ -163,7 +167,7 @@ export default function ProposeCatchScreen() {
       <Text style={styles.eyebrow}>DIRECT PROPOSAL</Text>
       <Text style={styles.title}>Ask {name} to catch.</Text>
       <Text style={styles.subtitle}>
-        Send a simple plan. If {name} accepts, Catch creates a private two-person plan.
+        Send a simple plan to {name}. Keep it between the two of you, or let nearby people request to join after acceptance.
       </Text>
 
       <Text style={styles.label}>Activity</Text>
@@ -362,6 +366,44 @@ export default function ProposeCatchScreen() {
         value={message}
       />
 
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: allowOthersToJoin }}
+        onPress={() => setAllowOthersToJoin((current) => !current)}
+        style={[styles.openOption, allowOthersToJoin && styles.openOptionSelected]}>
+        <Ionicons
+          color={colors.forest}
+          name={allowOthersToJoin ? 'checkbox' : 'square-outline'}
+          size={25}
+        />
+        <View style={styles.openOptionCopy}>
+          <Text style={styles.openOptionTitle}>Allow others to request to join</Text>
+          <Text style={styles.openOptionBody}>
+            After {name} accepts, nearby people can see the broad plan and ask to join. You approve each person before they enter the Catch.
+          </Text>
+        </View>
+      </Pressable>
+      {allowOthersToJoin ? (
+        <View style={styles.crewSizeBox}>
+          <Text style={styles.smallLabel}>Maximum total crew</Text>
+          <View style={styles.chips}>
+            {[3, 4, 6, 8].map((size) => (
+              <Chip
+                key={size}
+                label={`${size} people`}
+                onPress={() => setMaximumParticipants(size)}
+                selected={maximumParticipants === size}
+              />
+            ))}
+          </View>
+          <Text style={styles.crewSafety}>
+            {locationType === 'private'
+              ? 'Only the broad area is public. Exact private details unlock separately after you approve someone.'
+              : 'The accepted Catch becomes discoverable, but joining still requires your approval.'}
+          </Text>
+        </View>
+      ) : null}
+
       <View style={styles.preview}>
         <Ionicons color={colors.forest} name="paper-plane-outline" size={21} />
         <Text style={styles.previewText}>
@@ -377,7 +419,7 @@ export default function ProposeCatchScreen() {
                 (locationType === 'private'
                   ? `${areaLabel || 'broad area'} · private spot unlocks after acceptance`
                   : `${areaLabel || 'broad area'}, exact spot later`)
-              }`
+              }${allowOthersToJoin ? ` · open to requests · up to ${maximumParticipants}` : ' · just the two of you'}`
             : 'Enter a valid date and time'}
         </Text>
       </View>
@@ -397,6 +439,13 @@ const styles = StyleSheet.create({
   eyebrow: { marginTop: spacing.sm, color: colors.orangeDark, fontSize: 10, fontWeight: '900', letterSpacing: 1.2 },
   title: { maxWidth: 450, color: colors.ink, fontSize: 31, fontWeight: '900' },
   subtitle: { maxWidth: 500, marginTop: 5, color: colors.muted, fontSize: 13, lineHeight: 20 },
+  openOption: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: spacing.lg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.paper, padding: spacing.md },
+  openOptionSelected: { borderColor: colors.grass, backgroundColor: colors.paleGreen },
+  openOptionCopy: { flex: 1, gap: 3 },
+  openOptionTitle: { color: colors.ink, fontSize: 13, fontWeight: '900' },
+  openOptionBody: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  crewSizeBox: { gap: 9, marginTop: 10, borderRadius: radius.md, backgroundColor: colors.cream, padding: 12 },
+  crewSafety: { color: colors.forest, fontSize: 10, lineHeight: 15 },
   label: { marginTop: spacing.lg, marginBottom: 8, color: colors.ink, fontSize: 13, fontWeight: '800' },
   activityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   activity: {

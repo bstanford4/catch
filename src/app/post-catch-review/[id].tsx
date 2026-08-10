@@ -25,6 +25,7 @@ import {
   postCatchTraits,
   type PostCatchTrait,
 } from '@/services/post-catch-review-utils';
+import { saveSharedReviewNote } from '@/services/shared-feedback-service';
 
 const scoreLabels = ['Rough', 'Not great', 'Good', 'Very good', 'Great'];
 
@@ -38,6 +39,7 @@ export default function PostCatchReviewScreen() {
   const [wouldCatchAgain, setWouldCatchAgain] = useState<boolean | null>(null);
   const [traits, setTraits] = useState<PostCatchTrait[]>([]);
   const [privateNote, setPrivateNote] = useState('');
+  const [sharedNote, setSharedNote] = useState('');
   const [isLoading, setIsLoading] = useState(Boolean(session));
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -55,6 +57,7 @@ export default function PostCatchReviewScreen() {
       setWouldCatchAgain(firstTarget?.wouldCatchAgain ?? null);
       setTraits(firstTarget?.traits ?? []);
       setPrivateNote(firstTarget?.privateNote ?? '');
+      setSharedNote(firstTarget?.sharedNote ?? '');
       setError(result.error ?? '');
       setIsLoading(false);
     });
@@ -89,8 +92,8 @@ export default function PostCatchReviewScreen() {
       traits,
       wouldCatchAgain,
     });
-    setIsSaving(false);
     if (result.error) {
+      setIsSaving(false);
       setError(
         result.error.includes('list_post_catch_review') || result.error.includes('upsert_post_catch_review')
           ? 'Post-Catch reviews are not ready yet. Apply the post-Catch review migration, then try again.'
@@ -98,11 +101,17 @@ export default function PostCatchReviewScreen() {
       );
       return;
     }
+    const sharedResult = await saveSharedReviewNote(id, current.subjectId, sharedNote);
+    setIsSaving(false);
+    if (sharedResult.error) {
+      setError(`Your review was saved, but the shared note was not: ${sharedResult.error}`);
+      return;
+    }
 
     const reviewedAt = new Date().toISOString();
     const updated = targets.map((target) =>
       target.subjectId === current.subjectId
-        ? { ...target, privateNote, reviewedAt, score, traits, wouldCatchAgain }
+        ? { ...target, privateNote, reviewedAt, score, sharedNote, traits, wouldCatchAgain }
         : target,
     );
     setTargets(updated);
@@ -116,6 +125,7 @@ export default function PostCatchReviewScreen() {
       setWouldCatchAgain(next.wouldCatchAgain);
       setTraits(next.traits);
       setPrivateNote(next.privateNote);
+      setSharedNote(next.sharedNote);
       setSavedMessage('');
     }
   }
@@ -143,7 +153,17 @@ export default function PostCatchReviewScreen() {
         <Text style={styles.eyebrow}>POST-CATCH CHECK-IN</Text>
         <Text style={styles.title}>How did it go?</Text>
         {error ? (
-          <StatePanel body={error} icon="alert-circle-outline" title="Review unavailable" />
+          <StatePanel
+            action={error.includes('Confirm that you attended') ? 'Confirm attendance' : undefined}
+            body={error}
+            icon="alert-circle-outline"
+            onAction={
+              error.includes('Confirm that you attended')
+                ? () => router.push(`/catch-attendance/${id}` as never)
+                : undefined
+            }
+            title="Review unavailable"
+          />
         ) : (
           <StatePanel
             body="There is nobody else confirmed in this Catch yet. For a retroactive Catch, your Catch Mate must first confirm they were there."
@@ -195,6 +215,7 @@ export default function PostCatchReviewScreen() {
                 setWouldCatchAgain(target.wouldCatchAgain);
                 setTraits(target.traits);
                 setPrivateNote(target.privateNote);
+                setSharedNote(target.sharedNote);
                 setError('');
                 setSavedMessage('');
               }}
@@ -260,8 +281,8 @@ export default function PostCatchReviewScreen() {
             ))}
           </View>
 
-          <Text style={styles.fieldLabel}>Private note <Text style={styles.optional}>(optional)</Text></Text>
-          <Text style={styles.helper}>For your own context. This is never added to their public scouting report.</Text>
+          <Text style={styles.fieldLabel}>Private note to yourself <Text style={styles.optional}>(optional)</Text></Text>
+          <Text style={styles.helper}>Only you can see this when you revisit the Catch. It is never sent to {firstName(current.subjectName)}.</Text>
           <TextInput
             accessibilityLabel={`Private note about ${current.subjectName}`}
             maxLength={1000}
@@ -271,6 +292,21 @@ export default function PostCatchReviewScreen() {
             placeholderTextColor={colors.muted}
             style={styles.noteInput}
             value={privateNote}
+          />
+
+          <Text style={styles.fieldLabel}>Share a note with {firstName(current.subjectName)} <Text style={styles.optional}>(optional)</Text></Text>
+          <Text style={styles.helper}>
+            They will see this privately with your name. They can keep it private, hide it, or feature the quote anonymously on their profile.
+          </Text>
+          <TextInput
+            accessibilityLabel={`Shared feedback for ${current.subjectName}`}
+            maxLength={500}
+            multiline
+            onChangeText={setSharedNote}
+            placeholder={`Something helpful or encouraging for ${firstName(current.subjectName)}`}
+            placeholderTextColor={colors.muted}
+            style={styles.noteInput}
+            value={sharedNote}
           />
 
           {error ? <Text style={styles.error}>{error}</Text> : null}

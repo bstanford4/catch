@@ -16,6 +16,7 @@ export type CatchMateInvite = {
 
 export type DirectCatchProposal = {
   acceptedCatchId: string | null;
+  allowOthersToJoin: boolean;
   activity: {
     color: string;
     emoji: string;
@@ -29,6 +30,7 @@ export type DirectCatchProposal = {
   durationMinutes: number;
   id: string;
   message: string | null;
+  maximumParticipants: number;
   locationType: 'later' | 'catalog' | 'private';
   otherFirstName: string;
   otherUserId: string;
@@ -40,9 +42,11 @@ export type DirectCatchProposal = {
 
 export type DirectProposalInput = {
   activityTypeId: string;
+  allowOthersToJoin: boolean;
   areaLabel: string;
   durationMinutes: number;
   message: string;
+  maximumParticipants: number;
   locationType: 'later' | 'catalog' | 'private';
   privateLocation: {
     arrivalNotes: string | null;
@@ -115,7 +119,8 @@ export async function redeemCatchMateInvite(code: string) {
 
 export async function createDirectCatchProposal(input: DirectProposalInput) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
-  const { data, error } = await supabase.rpc('create_direct_catch_proposal', {
+  const { data, error } = await supabase.rpc('create_direct_catch_proposal_v2', {
+    requested_allow_others_to_join: input.allowOthersToJoin,
     requested_activity_type_id: input.activityTypeId,
     requested_area_label: input.areaLabel,
     requested_duration_minutes: input.durationMinutes,
@@ -126,6 +131,7 @@ export async function createDirectCatchProposal(input: DirectProposalInput) {
     requested_arrival_notes: input.privateLocation?.arrivalNotes?.trim() || null,
     requested_latitude: input.privateLocation?.latitude ?? null,
     requested_longitude: input.privateLocation?.longitude ?? null,
+    requested_maximum_participants: input.allowOthersToJoin ? input.maximumParticipants : 2,
     requested_recipient_id: input.recipientId,
     requested_starts_at: input.startsAt,
     requested_venue_id: input.venueId,
@@ -137,11 +143,12 @@ export async function listDirectCatchProposals() {
   if (!supabase) {
     return { data: [] as DirectCatchProposal[], error: 'Supabase is not configured.' };
   }
-  const { data, error } = await supabase.rpc('list_direct_catch_proposals');
+  const { data, error } = await supabase.rpc('list_direct_catch_proposals_v2');
   if (error) return { data: [] as DirectCatchProposal[], error: error.message };
   return {
     data: (data ?? []).map((row: {
       accepted_catch_id: string | null;
+      allow_others_to_join: boolean;
       activity_emoji: string | null;
       activity_name: string;
       activity_slug: string;
@@ -151,6 +158,7 @@ export async function listDirectCatchProposals() {
       direction: DirectCatchProposal['direction'];
       duration_minutes: number;
       message: string | null;
+      maximum_participants: number;
       location_type: DirectCatchProposal['locationType'];
       other_first_name: string;
       other_user_id: string;
@@ -161,6 +169,7 @@ export async function listDirectCatchProposals() {
       venue_name: string | null;
     }) => ({
       acceptedCatchId: row.accepted_catch_id,
+      allowOthersToJoin: row.allow_others_to_join,
       activity: {
         color: getActivityColor(row.activity_slug),
         emoji: getActivityEmoji(row.activity_slug, row.activity_emoji),
@@ -174,6 +183,7 @@ export async function listDirectCatchProposals() {
       durationMinutes: row.duration_minutes,
       id: row.proposal_id,
       message: row.message,
+      maximumParticipants: row.maximum_participants,
       locationType: row.location_type,
       otherFirstName: row.other_first_name,
       otherUserId: row.other_user_id,

@@ -1,6 +1,10 @@
 import { getActivityColor, getActivityEmoji } from '@/constants/activity-catalog';
 import { supabase } from '@/lib/supabase';
 import { createProfilePhotoUrl } from '@/services/profile-service';
+import {
+  type FeaturedFeedback,
+  listFeaturedFeedback,
+} from '@/services/shared-feedback-service';
 
 export type CatchParticipant = {
   firstName: string;
@@ -43,6 +47,7 @@ export type ParticipantProfile = {
   bio: string | null;
   catchesTogether: number;
   firstName: string;
+  featuredFeedback: FeaturedFeedback[];
   isCatchMate: boolean;
   photoUrl: string | null;
   scoutingReport: ParticipantScoutingReport;
@@ -147,7 +152,7 @@ export async function listCatchParticipants(catchId: string) {
 
 export async function getParticipantProfile(userId: string) {
   if (!supabase) return { data: null, error: 'Supabase is not configured.' };
-  const [{ data, error }, photoResult, equipmentResult, scoutingResult] = await Promise.all([
+  const [{ data, error }, photoResult, equipmentResult, scoutingResult, feedbackResult] = await Promise.all([
     supabase.rpc('get_participant_profile', {
       requested_user_id: userId,
     }),
@@ -160,6 +165,7 @@ export async function getParticipantProfile(userId: string) {
     supabase.rpc('get_participant_scouting_report', {
       requested_user_id: userId,
     }),
+    listFeaturedFeedback(userId),
   ]);
   if (error) return { data: null, error: error.message };
   const row = (data?.[0] ?? null) as ParticipantProfileRow | null;
@@ -196,6 +202,7 @@ export async function getParticipantProfile(userId: string) {
       bio: row.bio,
       catchesTogether: Number(row.catches_together) || 0,
       firstName: row.first_name,
+      featuredFeedback: feedbackResult.data,
       isCatchMate: row.is_catch_mate,
       photoUrl: await createProfilePhotoUrl(photoPath),
       scoutingReport: mapParticipantScoutingReport(

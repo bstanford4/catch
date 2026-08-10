@@ -157,6 +157,7 @@ export default function CatchHistoryScreen() {
           <HistoryCard
             item={item}
             key={item.catchId}
+            onAttendance={() => router.push(`/catch-attendance/${item.catchId}` as never)}
             onOpenMemories={() => router.push(`/catch-memories/${item.catchId}` as never)}
             onReview={() => router.push(`/post-catch-review/${item.catchId}` as never)}
           />
@@ -168,10 +169,12 @@ export default function CatchHistoryScreen() {
 
 function HistoryCard({
   item,
+  onAttendance,
   onOpenMemories,
   onReview,
 }: {
   item: CatchHistoryItem;
+  onAttendance: () => void;
   onOpenMemories: () => void;
   onReview: () => void;
 }) {
@@ -220,6 +223,26 @@ function HistoryCard({
         </View>
       )}
 
+      {item.attendanceRequired ? (
+        <Pressable
+          accessibilityLabel={`Confirm attendance for ${item.title}`}
+          onPress={onAttendance}
+          style={[
+            styles.attendanceAction,
+            item.attendanceStatus === 'attended' && styles.attendanceActionComplete,
+          ]}>
+          <View style={styles.reviewActionText}>
+            <Text style={styles.reviewTitle}>{attendanceTitle(item.attendanceStatus)}</Text>
+            <Text style={styles.reviewBody}>{attendanceBody(item.attendanceStatus)}</Text>
+          </View>
+          <Ionicons
+            color={item.attendanceStatus === 'attended' ? colors.forest : colors.orangeDark}
+            name={item.attendanceStatus === 'attended' ? 'checkmark-circle' : 'people-outline'}
+            size={23}
+          />
+        </Pressable>
+      ) : null}
+
       <View style={styles.cardFooter}>
         <Text style={styles.memoryCount}>
           {totalMemories
@@ -233,7 +256,8 @@ function HistoryCard({
           <Ionicons color={colors.orangeDark} name="arrow-forward" size={17} />
         </Pressable>
       </View>
-      {item.reviewEligibleCount > 0 ? (
+      {item.reviewEligibleCount > 0 &&
+      (!item.attendanceRequired || item.attendanceStatus === 'attended') ? (
         <Pressable
           accessibilityLabel={`${reviewComplete ? 'Update' : 'Complete'} post-Catch review for ${item.title}`}
           onPress={onReview}
@@ -264,6 +288,20 @@ function formatCatchDate(value: string) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
+}
+
+function attendanceTitle(status: CatchHistoryItem['attendanceStatus']) {
+  if (status === 'attended') return 'Attendance confirmed';
+  if (status === 'no_show') return 'Marked as not attended';
+  if (status === 'disputed') return 'Attendance needs your answer';
+  return 'Who made the Catch?';
+}
+
+function attendanceBody(status: CatchHistoryItem['attendanceStatus']) {
+  if (status === 'attended') return 'Tap to update attendance or check the rest of the crew.';
+  if (status === 'no_show') return 'Tap if you need to change your answer.';
+  if (status === 'disputed') return 'Confirm your own attendance before ratings can count.';
+  return 'Confirm yourself first, then tell us who else attended.';
 }
 
 function formatCrew(names: string[]) {
@@ -325,6 +363,8 @@ const styles = StyleSheet.create({
   memoryCount: { flexShrink: 1, color: colors.muted, fontSize: 10, fontWeight: '700' },
   openAction: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   openActionText: { color: colors.orangeDark, fontSize: 11, fontWeight: '900' },
+  attendanceAction: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: colors.paleOrange, padding: 12 },
+  attendanceActionComplete: { backgroundColor: colors.paleGreen },
   reviewAction: { minHeight: 58, flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: colors.paleOrange, padding: 12 },
   reviewActionComplete: { backgroundColor: colors.paleGreen },
   reviewActionText: { flex: 1, gap: 2 },

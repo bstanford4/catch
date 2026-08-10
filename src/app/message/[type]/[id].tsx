@@ -224,6 +224,11 @@ export default function MessageThreadScreen() {
                   <Text style={styles.decisionBody}>
                     Accept to create the Catch, or decline if this plan does not work.
                   </Text>
+                  {proposal.allowOthersToJoin ? (
+                    <Text style={styles.openProposalText}>
+                      After acceptance, nearby people can request to join this Catch. The host approves each person, up to {proposal.maximumParticipants} total.
+                    </Text>
+                  ) : null}
                 </View>
               </View>
               <View style={styles.decisionActions}>
@@ -253,6 +258,9 @@ export default function MessageThreadScreen() {
               <Ionicons color={colors.forest} name="time-outline" size={20} />
               <Text style={styles.waitingText}>
                 Waiting for {proposal.otherFirstName} to accept or decline this proposal.
+                {proposal.allowOthersToJoin
+                  ? ` If accepted, nearby people may request to join, up to ${proposal.maximumParticipants} total.`
+                  : ''}
               </Text>
             </View>
           )
@@ -387,6 +395,7 @@ const styles = StyleSheet.create({
   decisionText: { flex: 1, gap: 2 },
   decisionTitle: { color: colors.ink, fontSize: 16, fontWeight: '900' },
   decisionBody: { color: colors.muted, fontSize: 10, lineHeight: 15 },
+  openProposalText: { marginTop: 4, color: colors.forest, fontSize: 10, lineHeight: 15, fontWeight: '800' },
   decisionActions: { flexDirection: 'row', gap: 8 },
   declineButton: { flex: 1, minHeight: 46, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: radius.md },
   declineText: { color: colors.error, fontSize: 12, fontWeight: '900' },

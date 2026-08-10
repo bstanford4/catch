@@ -59,14 +59,14 @@ duration; confirmed Catches remain available for the future completion flow.
 
 Live list discovery, join requests, transactional host approval, and protected
 location release are implemented. Saved Catch Mates, private friend codes, and
-direct proposals with immutable first revisions are also implemented; accepting
-a proposal creates an unlisted two-person Catch. Persistent Open to Catch listings
+direct proposals with immutable first revisions are also implemented. A sender
+can keep an accepted proposal to two people or make it discoverable with a total
+crew limit; every additional person still requests access and requires host
+approval before joining or seeing an exact private location. Persistent Open to Catch listings
 now show compatible people using shared activities, day-specific broad availability,
 and area; newly posted Catches create matching in-app alerts. Remaining work is
 distance-weighted scoring, map mode, counter-proposal revisions, external
-invitations, push-delivery operations, and an **Allow others to join** option
-for accepted direct proposals. For private locations, newly interested members
-must still be approved before the exact location is revealed.
+invitations and push-delivery operations.
 
 ### Phase 6 — messages and notifications
 
@@ -97,9 +97,16 @@ other confirmed participant, Catch History supports later updates, raw responses
 remain private, and eligible structured ratings update the member's own scouting
 report. Privacy-thresholded Catch Mate scouting reports are also visible to
 connected members after reviews from at least three distinct people; raw answers
-and private notes remain private. Remaining work is participant attendance/no-show
-confirmation, reliability events, scheduled reminder delivery, athletic-rating
-visibility, equipment/venue reviews, and shareable Catch Cards.
+and private notes remain private. New planned and impromptu Catches now use the
+same private, editable attendance check: members confirm themselves before
+rating, may report who else attended, and a single no-show report never changes
+someone's public reputation. Remaining work is reliability-event adjudication,
+scheduled reminder delivery, athletic-rating visibility, equipment/venue
+reviews, and shareable Catch Cards.
+Reviewers can also send a separate optional note to the person they reviewed.
+It is private to the recipient by default; the recipient may hide it or feature
+the quote anonymously on their profile. Reviewer-only notes and raw scores remain
+private and are never converted into profile content.
 
 ### Phase 8 — safety and moderation
 

@@ -76,8 +76,12 @@ function LiveCatchDetails({ id }: { id: string }) {
       setItem(catchResult.data);
       setRequest(requestResult.data);
       setError(catchResult.error ?? requestResult.error ?? '');
+      const participantStatus = requestResult.data?.status;
       const maySeePrivate =
-        catchResult.data?.hostId === session.user.id || requestResult.data?.status === 'approved';
+        catchResult.data?.hostId === session.user.id ||
+        participantStatus === 'approved' ||
+        participantStatus === 'attended' ||
+        participantStatus === 'no_show';
       if (maySeePrivate) {
         const participantResult = await listCatchParticipants(id);
         if (!active) return;
@@ -118,11 +122,14 @@ function LiveCatchDetails({ id }: { id: string }) {
         status: 'requested',
       },
     );
-    if (refreshed?.data?.status === 'approved' && item?.locationType === 'private') {
+    if (
+      ['approved', 'attended', 'no_show'].includes(refreshed?.data?.status ?? '') &&
+      item?.locationType === 'private'
+    ) {
       const locationResult = await getPrivateCatchLocation(id);
       setPrivateLocation(locationResult.data);
     }
-    if (refreshed?.data?.status === 'approved') {
+    if (['approved', 'attended', 'no_show'].includes(refreshed?.data?.status ?? '')) {
       const participantResult = await listCatchParticipants(id);
       setParticipants(participantResult.data);
     }
@@ -166,6 +173,7 @@ function LiveCatchDetails({ id }: { id: string }) {
     }
     setItem({ ...item, status: 'completed' });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace(`/catch-attendance/${item.id}` as never);
   }
 
   if (isLoading) {
@@ -207,7 +215,7 @@ function LiveCatchDetails({ id }: { id: string }) {
     minute: '2-digit',
   }).format(new Date(item.startsAt));
   const isHost = item.hostId === session.user.id;
-  const approved = request?.status === 'approved';
+  const approved = ['approved', 'attended', 'no_show'].includes(request?.status ?? '');
   const catchEnded =
     new Date(item.startsAt).getTime() + item.durationMinutes * 60_000 <= openedAt;
   const locationValue = privateLocation
@@ -361,11 +369,17 @@ function LiveCatchDetails({ id }: { id: string }) {
             </View>
           </View>
           <Button
+            icon="people-outline"
+            label="Confirm attendance"
+            onPress={() => router.push(`/catch-attendance/${item.id}` as never)}
+          />
+          <Button
             icon="clipboard-outline"
             label="Review Catch crew"
             onPress={() =>
               router.push(`/post-catch-review/${item.id}` as never)
             }
+            variant="secondary"
           />
           <Button
             icon="images-outline"

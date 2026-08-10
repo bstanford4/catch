@@ -18,6 +18,10 @@ import {
   type ScoutingReport,
 } from '@/services/post-catch-review-service';
 import { buildScoutingSummary } from '@/services/post-catch-review-utils';
+import {
+  type FeaturedFeedback,
+  listFeaturedFeedback,
+} from '@/services/shared-feedback-service';
 import { formatMemberName } from '@/utils/member-name';
 
 type Setting = {
@@ -35,6 +39,7 @@ export default function ProfileScreen() {
   const [equipmentDetail, setEquipmentDetail] = useState('Nothing added yet');
   const [availabilityDetail, setAvailabilityDetail] = useState('Not set yet');
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [featuredFeedback, setFeaturedFeedback] = useState<FeaturedFeedback[]>([]);
   const [scoutingReport, setScoutingReport] = useState<ScoutingReport>({
     averageScore: null,
     completedCatchCount: 0,
@@ -65,7 +70,8 @@ export default function ProfileScreen() {
         listAvailability(session.user.id),
         getMyEditableProfile(session.user.id),
         getMyScoutingReport(),
-      ]).then(([equipment, availability, editableProfile, scouting]) => {
+        listFeaturedFeedback(session.user.id),
+      ]).then(([equipment, availability, editableProfile, scouting, feedback]) => {
         if (!active) return;
         if (!equipment.error) {
           const shareable = equipment.data.filter((item) => item.canShare).length;
@@ -90,6 +96,7 @@ export default function ProfileScreen() {
         }
         if (!editableProfile.error) setPhotoUrl(editableProfile.data?.photoUrl ?? null);
         if (!scouting.error) setScoutingReport(scouting.data);
+        if (!feedback.error) setFeaturedFeedback(feedback.data);
       });
       return () => {
         active = false;
@@ -128,6 +135,12 @@ export default function ProfileScreen() {
           label: 'Catch History',
           detail: 'Completed Catches and memories',
           onPress: () => router.push('/catch-history' as never),
+        },
+        {
+          icon: 'heart-outline',
+          label: 'Feedback from Catch Mates',
+          detail: 'Private notes and featured quotes',
+          onPress: () => router.push('/shared-feedback' as never),
         },
         { icon: 'shield-checkmark-outline', label: 'Privacy & safety', detail: 'Ratings hidden' },
         {
@@ -232,6 +245,21 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </LinearGradient>
+
+      {featuredFeedback.length ? (
+        <View style={styles.featuredSection}>
+          <View style={styles.featuredHeading}>
+            <Ionicons color={colors.forest} name="heart-outline" size={20} />
+            <Text style={styles.featuredTitle}>Featured Catch Mate notes</Text>
+          </View>
+          {featuredFeedback.map((feedback) => (
+            <View key={feedback.feedbackId} style={styles.featuredQuoteCard}>
+              <Text style={styles.featuredQuote}>“{feedback.sharedNote}”</Text>
+              <Text style={styles.featuredMeta}>Shown anonymously on your profile</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View style={styles.settingsList}>
         {visibleSettings.map((item) => (
@@ -403,6 +431,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontStyle: 'italic',
   },
+  featuredSection: { gap: 9, marginTop: spacing.lg, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.paper, padding: spacing.md },
+  featuredHeading: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  featuredTitle: { color: colors.ink, fontSize: 16, fontWeight: '900' },
+  featuredQuoteCard: { gap: 4, borderRadius: radius.md, backgroundColor: colors.paleGreen, padding: 12 },
+  featuredQuote: { color: colors.forest, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
+  featuredMeta: { color: colors.forestSoft, fontSize: 8, fontWeight: '800' },
   settingsList: {
     marginTop: spacing.lg,
     borderWidth: 1,

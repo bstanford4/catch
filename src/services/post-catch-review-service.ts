@@ -3,6 +3,7 @@ import {
   type PostCatchTrait,
   validatePostCatchReview,
 } from '@/services/post-catch-review-utils';
+import { listAuthoredSharedFeedback } from '@/services/shared-feedback-service';
 
 export type PostCatchReviewTarget = {
   catchId: string;
@@ -10,6 +11,7 @@ export type PostCatchReviewTarget = {
   privateNote: string;
   reviewedAt: string | null;
   score: number | null;
+  sharedNote: string;
   startsAt: string;
   subjectId: string;
   subjectName: string;
@@ -62,9 +64,10 @@ type ScoutingReportRow = {
 
 export async function listPostCatchReview(catchId: string) {
   if (!supabase) return { data: [] as PostCatchReviewTarget[], error: 'Supabase is not configured.' };
-  const { data, error } = await supabase.rpc('list_post_catch_review', {
-    requested_catch_id: catchId,
-  });
+  const [{ data, error }, sharedResult] = await Promise.all([
+    supabase.rpc('list_post_catch_review', { requested_catch_id: catchId }),
+    listAuthoredSharedFeedback(catchId),
+  ]);
   if (error) return { data: [] as PostCatchReviewTarget[], error: error.message };
   return {
     data: ((data ?? []) as PostCatchReviewRow[]).map((row) => ({
@@ -73,13 +76,14 @@ export async function listPostCatchReview(catchId: string) {
       privateNote: row.private_note ?? '',
       reviewedAt: row.reviewed_at,
       score: row.score,
+      sharedNote: sharedResult.data.get(row.subject_id) ?? '',
       startsAt: row.starts_at,
       subjectId: row.subject_id,
       subjectName: row.subject_name,
       traits: row.traits ?? [],
       wouldCatchAgain: row.would_catch_again,
     })),
-    error: null,
+    error: sharedResult.error,
   };
 }
 

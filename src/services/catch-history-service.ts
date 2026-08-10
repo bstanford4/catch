@@ -1,11 +1,18 @@
 import { getActivityColor, getActivityEmoji } from '@/constants/activity-catalog';
 import { supabase } from '@/lib/supabase';
+import {
+  type MyAttendanceStatus,
+  type ResolvedAttendance,
+  listMyAttendanceStatuses,
+} from '@/services/attendance-service';
 import { listMyPostCatchReviewStatuses } from '@/services/post-catch-review-service';
 
 export type CatchHistoryItem = {
   activityColor: string;
   activityEmoji: string;
   activityName: string;
+  attendanceRequired: boolean;
+  attendanceStatus: ResolvedAttendance;
   catchId: string;
   durationMinutes: number;
   locationLabel: string;
@@ -46,15 +53,19 @@ async function signPreview(path: string) {
 
 export async function listMyCatchHistory(limit = 50, offset = 0) {
   if (!supabase) return { data: [] as CatchHistoryItem[], error: 'Supabase is not configured.' };
-  const [{ data, error }, reviewResult] = await Promise.all([
+  const [{ data, error }, reviewResult, attendanceResult] = await Promise.all([
     supabase.rpc('list_my_catch_history', {
       requested_limit: limit,
       requested_offset: offset,
     }),
     listMyPostCatchReviewStatuses(),
+    listMyAttendanceStatuses(),
   ]);
   if (error) return { data: [] as CatchHistoryItem[], error: error.message };
   const reviewByCatch = new Map(reviewResult.data.map((status) => [status.catchId, status]));
+  const attendanceByCatch = new Map<string, MyAttendanceStatus>(
+    attendanceResult.data.map((status: MyAttendanceStatus) => [status.catchId, status]),
+  );
 
   const rows = (data ?? []) as CatchHistoryRow[];
   const mapped = await Promise.all(
@@ -62,11 +73,14 @@ export async function listMyCatchHistory(limit = 50, offset = 0) {
       const signed = await Promise.all((row.preview_paths ?? []).map(signPreview));
       const urlError = signed.find((preview) => preview.error)?.error;
       const review = reviewByCatch.get(row.catch_id);
+      const attendance = attendanceByCatch.get(row.catch_id);
       return {
         item: {
           activityColor: getActivityColor(row.activity_slug),
           activityEmoji: getActivityEmoji(row.activity_slug, row.activity_emoji),
           activityName: row.activity_name,
+          attendanceRequired: attendance?.attendanceRequired ?? false,
+          attendanceStatus: attendance?.resolvedStatus ?? 'attended',
           catchId: row.catch_id,
           durationMinutes: row.duration_minutes,
           locationLabel: row.location_label,
@@ -86,6 +100,10 @@ export async function listMyCatchHistory(limit = 50, offset = 0) {
   );
   return {
     data: mapped.map(({ item }) => item),
-    error: mapped.find(({ urlError }) => urlError)?.urlError ?? reviewResult.error ?? null,
+    error:
+      mapped.find(({ urlError }) => urlError)?.urlError ??
+      reviewResult.error ??
+      attendanceResult.error ??
+      null,
   };
 }

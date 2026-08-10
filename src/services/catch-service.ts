@@ -456,6 +456,28 @@ export async function getMyJoinRequest(catchId: string, userId: string) {
     .eq('requester_id', userId)
     .maybeSingle();
   if (error) return { data: null, error: error.message };
+  if (!data) {
+    const { data: participant, error: participantError } = await supabase
+      .from('catch_participants')
+      .select('status, joined_at')
+      .eq('catch_id', catchId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (participantError) return { data: null, error: participantError.message };
+    if (participant) {
+      return {
+        data: {
+          createdAt: participant.joined_at,
+          id: `participant:${catchId}:${userId}`,
+          message: null,
+          requesterFirstName: '',
+          requesterId: userId,
+          status: participant.status as JoinRequestStatus,
+        } satisfies JoinRequest,
+        error: null,
+      };
+    }
+  }
   return {
     data: data
       ? ({

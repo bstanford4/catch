@@ -262,6 +262,22 @@ export default function ParticipantProfileScreen() {
         </View>
       </LinearGradient>
 
+      {profile.featuredFeedback.length ? (
+        <ProfileSection icon="heart-outline" title="Featured Catch Mate notes">
+          <Text style={styles.sectionIntro}>
+            Quotes {profile.firstName} chose to share. Writers remain anonymous on the profile.
+          </Text>
+          {profile.featuredFeedback.map((feedback) => (
+            <View key={feedback.feedbackId} style={styles.featuredQuoteCard}>
+              <Text style={styles.featuredQuote}>“{feedback.sharedNote}”</Text>
+              <Text style={styles.featuredQuoteMeta}>
+                Featured anonymously by {profile.firstName}
+              </Text>
+            </View>
+          ))}
+        </ProfileSection>
+      ) : null}
+
       <ProfileSection icon="person-outline" title="About">
         <Text style={styles.body}>
           {profile.bio?.trim() || 'No bio yet—just someone ready for a good Catch.'}
@@ -458,6 +474,9 @@ const styles = StyleSheet.create({
   catchStatDivider: { width: 1, height: 37, backgroundColor: 'rgba(255,255,255,0.17)' },
   scoutingCopy: { marginTop: 17, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.09)', padding: 11 },
   scoutingText: { color: '#E7F0E9', fontSize: 12, lineHeight: 18, fontStyle: 'italic' },
+  featuredQuoteCard: { gap: 5, borderRadius: radius.md, backgroundColor: colors.paleGreen, padding: 12 },
+  featuredQuote: { color: colors.forest, fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
+  featuredQuoteMeta: { color: colors.forestSoft, fontSize: 8, fontWeight: '800', letterSpacing: 0.4 },
   section: {
     gap: 11,
     marginTop: spacing.lg,
