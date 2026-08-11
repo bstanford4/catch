@@ -64,7 +64,7 @@ export default function RootLayout() {
           <Stack.Screen name="catch-highlights" options={{ title: 'Catch Highlights' }} />
           <Stack.Screen name="catch-requests/[id]" options={{ title: 'Join requests' }} />
           <Stack.Screen name="catch-mates" options={{ title: 'Catch Mates' }} />
-          <Stack.Screen name="proposals" options={{ title: 'Catch proposals' }} />
+          <Stack.Screen name="proposals" options={{ title: 'Invitations & proposals' }} />
           <Stack.Screen name="propose/[mateId]" options={{ title: 'Propose a Catch' }} />
           <Stack.Screen name="matches" options={{ title: 'Catches for you' }} />
           <Stack.Screen name="message/[type]/[id]" options={{ title: 'Conversation' }} />

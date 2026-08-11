@@ -13,6 +13,12 @@ import { activities as demoActivities } from '@/data/demo';
 import { useAuth } from '@/providers/auth-provider';
 import { formatMemberName } from '@/utils/member-name';
 import {
+  type HostCatchInvitation,
+  listHostCatchInvitations,
+  syncCatchMateInvitations,
+} from '@/services/catch-invitation-service';
+import { listCatchMates, type SavedCatchMate } from '@/services/catch-mate-service';
+import {
   type CatchCatalogActivity,
   type CatchInput,
   type CatchLocationType,
@@ -132,6 +138,12 @@ export default function CreateModeScreen() {
   const [customDate, setCustomDate] = useState(dateInputValue(initialCustomStart));
   const [customTime, setCustomTime] = useState(timeInputValue(initialCustomStart));
   const [capacity, setCapacity] = useState(4);
+  const [mates, setMates] = useState<SavedCatchMate[]>([]);
+  const [selectedMateIds, setSelectedMateIds] = useState<string[]>([]);
+  const [invitationStatuses, setInvitationStatuses] = useState<
+    Record<string, 'pending' | 'accepted'>
+  >({});
+  const [savedCatchId, setSavedCatchId] = useState<string | null>(null);
   const [intensity, setIntensity] = useState('Easygoing');
   const [approvalRequired, setApprovalRequired] = useState(true);
   const [minimumAge, setMinimumAge] = useState<18 | 21>(18);
@@ -151,7 +163,17 @@ export default function CreateModeScreen() {
       editingId
         ? getPrivateCatchLocation(editingId)
         : Promise.resolve({ data: null, error: null }),
-    ]).then(([catalogResult, catchResult, privateLocationResult]) => {
+      listCatchMates(),
+      editingId
+        ? listHostCatchInvitations(editingId)
+        : Promise.resolve({ data: [], error: null }),
+    ]).then(([
+      catalogResult,
+      catchResult,
+      privateLocationResult,
+      mateResult,
+      invitationResult,
+    ]) => {
       if (!active) return;
       if (catalogResult.error) {
         setError(catalogResult.error);
@@ -218,6 +240,27 @@ export default function CreateModeScreen() {
         setPrivateArrivalNotes(privateLocationResult.data.arrivalNotes ?? '');
         setPrivateLocationConfirmed(true);
       }
+      setMates(mateResult.data);
+      if (mateResult.error) setError(mateResult.error);
+      if (invitationResult.error) {
+        setError(invitationResult.error);
+      } else {
+        const selectableInvitations = invitationResult.data.filter(
+          (invitation: HostCatchInvitation) =>
+            invitation.status === 'accepted' ||
+            mateResult.data.some((mate: SavedCatchMate) => mate.id === invitation.inviteeId),
+        );
+        const statuses = Object.fromEntries(
+          selectableInvitations.map((invitation: HostCatchInvitation) => [
+            invitation.inviteeId,
+            invitation.status,
+          ]),
+        );
+        setInvitationStatuses(statuses);
+        setSelectedMateIds(
+          selectableInvitations.map((invitation: HostCatchInvitation) => invitation.inviteeId),
+        );
+      }
       setIsLoading(false);
     });
 
@@ -234,6 +277,21 @@ export default function CreateModeScreen() {
 
   const selectedActivity =
     catalog.find((activity) => activity.slug === activitySlug) ?? catalog[0];
+  const effectiveEditingId = editingId ?? savedCatchId;
+
+  function toggleMate(mateId: string) {
+    if (invitationStatuses[mateId] === 'accepted') return;
+    setSelectedMateIds((current) => {
+      if (current.includes(mateId)) return current.filter((id) => id !== mateId);
+      if (current.length >= 11) {
+        setError('A Catch can include up to 12 people including you.');
+        return current;
+      }
+      const next = [...current, mateId];
+      setCapacity((value) => Math.max(value, next.length + 1));
+      return next;
+    });
+  }
 
   function selectActivity(activity: CatchCatalogActivity) {
     const previousAutomaticTitle = automaticTitle.current;
@@ -418,12 +476,35 @@ export default function CreateModeScreen() {
       title,
       venue: locationType === 'catalog' ? selectedVenue : null,
     };
-    const result = editingId
-      ? await updateCatch(editingId, input)
-      : await createCatch(input);
+    let catchId = effectiveEditingId;
+    if (catchId) {
+      const updateResult = await updateCatch(catchId, input);
+      if (updateResult.error) {
+        setIsSaving(false);
+        setError(updateResult.error);
+        return;
+      }
+    } else {
+      const createResult = await createCatch(input);
+      if (createResult.error || !createResult.data) {
+        setIsSaving(false);
+        setError(createResult.error ?? 'Catch was not created.');
+        return;
+      }
+      catchId = createResult.data;
+      setSavedCatchId(catchId);
+    }
+    if (!catchId) {
+      setIsSaving(false);
+      setError('The Catch was saved without a valid identifier.');
+      return;
+    }
+    const invitationResult = await syncCatchMateInvitations(catchId, selectedMateIds);
     setIsSaving(false);
-    if (result.error) {
-      setError(result.error);
+    if (invitationResult.error) {
+      setError(
+        `The Catch was saved, but the invitations were not updated. Fix the selection and tap Save again. ${invitationResult.error}`,
+      );
       return;
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -791,12 +872,56 @@ export default function CreateModeScreen() {
         </View>
       ) : null}
 
+      <Text style={styles.label}>Invite Catch Mates</Text>
+      <Text style={styles.sectionHelper}>
+        They will receive an invitation and choose whether to join. Private location details stay
+        locked until they accept.
+      </Text>
+      <View style={styles.mateList}>
+        {mates.map((mate) => {
+          const selected = selectedMateIds.includes(mate.id);
+          const invitationStatus = invitationStatuses[mate.id];
+          return (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected, disabled: invitationStatus === 'accepted' }}
+              key={mate.id}
+              onPress={() => toggleMate(mate.id)}
+              style={[styles.mateRow, selected && styles.mateRowSelected]}>
+              <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+                {selected ? <Ionicons color={colors.white} name="checkmark" size={16} /> : null}
+              </View>
+              <View style={styles.settingText}>
+                <Text style={styles.mateName}>{mate.firstName}</Text>
+                <Text style={styles.settingDetail}>{mate.areaLabel}</Text>
+              </View>
+              {invitationStatus ? (
+                <Text style={styles.invitationStatus}>
+                  {invitationStatus === 'accepted' ? 'GOING' : 'INVITED'}
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+        {!isLoading && mates.length === 0 ? (
+          <Text style={styles.emptyMates}>
+            You do not have any Catch Mates yet. You can still create the Catch and invite people
+            later after connecting with them.
+          </Text>
+        ) : null}
+      </View>
+      {editingId && Object.values(invitationStatuses).includes('accepted') ? (
+        <Text style={styles.sectionHelper}>
+          Mates already marked Going are approved participants and cannot be removed here.
+        </Text>
+      ) : null}
+
       <Text style={styles.label}>Crew size</Text>
       <View style={styles.counterRow}>
         <Pressable
           accessibilityLabel="Decrease crew size"
-          disabled={capacity <= 2}
-          onPress={() => setCapacity((value) => Math.max(2, value - 1))}
+          disabled={capacity <= Math.max(2, selectedMateIds.length + 1)}
+          onPress={() => setCapacity((value) => Math.max(2, selectedMateIds.length + 1, value - 1))}
           style={styles.counterButton}>
           <Ionicons color={colors.forest} name="remove" size={20} />
         </Pressable>
@@ -895,13 +1020,13 @@ export default function CreateModeScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button
         disabled={isLoading || isSaving}
-        icon={editingId ? 'checkmark-circle' : 'paper-plane'}
+        icon={effectiveEditingId ? 'checkmark-circle' : 'paper-plane'}
         label={
           isLoading
             ? 'Loading…'
             : isSaving
               ? 'Saving…'
-              : editingId
+              : effectiveEditingId
                 ? 'Save changes'
                 : 'Create this Catch'
         }
@@ -1050,6 +1175,39 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 15,
+  },
+  sectionHelper: { marginBottom: 9, color: colors.muted, fontSize: 10, lineHeight: 15 },
+  mateList: { gap: 8 },
+  mateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    minHeight: 58,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    padding: 12,
+  },
+  mateRowSelected: { borderColor: colors.grass, backgroundColor: colors.paleGreen },
+  mateName: { color: colors.ink, fontSize: 13, fontWeight: '800' },
+  invitationStatus: {
+    borderRadius: radius.pill,
+    backgroundColor: colors.cream,
+    color: colors.forest,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  emptyMates: {
+    borderRadius: radius.md,
+    backgroundColor: colors.cream,
+    color: colors.muted,
+    fontSize: 11,
+    lineHeight: 17,
+    padding: 13,
   },
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   counterButton: {

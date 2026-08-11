@@ -7,6 +7,11 @@ import { Screen } from '@/components/ui/screen';
 import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 import {
+  type ReceivedCatchInvitation,
+  decideCatchInvitation,
+  listReceivedCatchInvitations,
+} from '@/services/catch-invitation-service';
+import {
   type DirectCatchProposal,
   decideDirectCatchProposal,
   listDirectCatchProposals,
@@ -16,15 +21,20 @@ import {
 export default function ProposalsScreen() {
   const router = useRouter();
   const [items, setItems] = useState<DirectCatchProposal[]>([]);
+  const [invitations, setInvitations] = useState<ReceivedCatchInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState('');
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     setIsLoading(true);
-    const result = await listDirectCatchProposals();
-    setItems(result.data);
-    setError(result.error ?? '');
+    const [proposalResult, invitationResult] = await Promise.all([
+      listDirectCatchProposals(),
+      listReceivedCatchInvitations(),
+    ]);
+    setItems(proposalResult.data);
+    setInvitations(invitationResult.data);
+    setError(proposalResult.error ?? invitationResult.error ?? '');
     setIsLoading(false);
   }, []);
 
@@ -71,14 +81,34 @@ export default function ProposalsScreen() {
     );
   }
 
+  async function decideInvitation(item: ReceivedCatchInvitation, approve: boolean) {
+    setSavingId(item.id);
+    setError('');
+    const result = await decideCatchInvitation(item.id, approve);
+    setSavingId('');
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setInvitations((current) =>
+      current.map((invitation) =>
+        invitation.id === item.id
+          ? { ...invitation, status: approve ? 'accepted' : 'declined' }
+          : invitation,
+      ),
+    );
+  }
+
   const pending = items.filter((item) => item.status === 'pending');
   const history = items.filter((item) => item.status !== 'pending');
+  const pendingInvitations = invitations.filter((item) => item.status === 'pending');
+  const invitationHistory = invitations.filter((item) => item.status !== 'pending');
 
   return (
     <Screen>
       <Text style={styles.eyebrow}>MAKE A PLAN</Text>
-      <Text style={styles.title}>Catch proposals</Text>
-      <Text style={styles.subtitle}>Simple invitations between people who already connected.</Text>
+      <Text style={styles.title}>Invitations & proposals</Text>
+      <Text style={styles.subtitle}>Plans between people who are already Catch Mates.</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {isLoading ? (
         <View style={styles.loading}>
@@ -86,7 +116,7 @@ export default function ProposalsScreen() {
           <Text style={styles.muted}>Loading proposals...</Text>
         </View>
       ) : null}
-      {!isLoading && items.length === 0 ? (
+      {!isLoading && items.length === 0 && invitations.length === 0 ? (
         <StatePanel
           action="Open Catch Mates"
           body="Choose a saved mate and send them a time, activity, and broad meeting area."
@@ -94,6 +124,23 @@ export default function ProposalsScreen() {
           onAction={() => router.push('/catch-mates')}
           title="No proposals yet"
         />
+      ) : null}
+      {pendingInvitations.length ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Invitations to a Catch</Text>
+          <Text style={styles.sectionHelper}>
+            A Catch Mate already made the plan and saved you a spot.
+          </Text>
+          {pendingInvitations.map((item) => (
+            <CatchInvitationCard
+              busy={savingId === item.id}
+              item={item}
+              key={item.id}
+              onAccept={() => decideInvitation(item, true)}
+              onDecline={() => decideInvitation(item, false)}
+            />
+          ))}
+        </View>
       ) : null}
       {pending.length ? (
         <View style={styles.section}>
@@ -140,7 +187,103 @@ export default function ProposalsScreen() {
           ))}
         </View>
       ) : null}
+      {invitationHistory.length ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Catch invitation history</Text>
+          {invitationHistory.map((item) => (
+            <CatchInvitationCard
+              item={item}
+              key={item.id}
+              onView={
+                item.status === 'accepted'
+                  ? () => router.push({ pathname: '/catch/[id]', params: { id: item.catchId } })
+                  : undefined
+              }
+            />
+          ))}
+        </View>
+      ) : null}
     </Screen>
+  );
+}
+
+function CatchInvitationCard({
+  busy = false,
+  item,
+  onAccept,
+  onDecline,
+  onView,
+}: {
+  busy?: boolean;
+  item: ReceivedCatchInvitation;
+  onAccept?: () => void;
+  onDecline?: () => void;
+  onView?: () => void;
+}) {
+  const start = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(item.startsAt));
+  return (
+    <View style={styles.card}>
+      <View style={[styles.activityIcon, { backgroundColor: item.activity.color }]}>
+        <Text style={styles.emoji}>{item.activity.emoji}</Text>
+      </View>
+      <View style={styles.cardBody}>
+        <View style={styles.cardTop}>
+          <Text style={styles.direction}>FROM {item.hostName.toUpperCase()}</Text>
+          <Text style={[styles.status, item.status === 'accepted' && styles.accepted]}>
+            {item.status.toUpperCase()}
+          </Text>
+        </View>
+        <Text style={styles.cardTitle}>{item.catchTitle}</Text>
+        <View style={styles.metaRow}>
+          <Ionicons color={colors.forestSoft} name="time-outline" size={15} />
+          <Text style={styles.meta}>{start} · {item.durationMinutes} min</Text>
+        </View>
+        <View style={styles.metaRow}>
+          <Ionicons
+            color={colors.forestSoft}
+            name={item.locationType === 'private' ? 'lock-closed-outline' : 'location-outline'}
+            size={15}
+          />
+          <Text style={styles.meta}>
+            {item.venueName ??
+              (item.locationType === 'private'
+                ? `${item.areaLabel} · private spot unlocks after acceptance`
+                : `${item.areaLabel} · details in the Catch`)}
+          </Text>
+        </View>
+        {onAccept && onDecline ? (
+          <View style={styles.actions}>
+            <Pressable
+              disabled={busy}
+              onPress={onDecline}
+              style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}>
+              <Text style={styles.declineText}>Decline</Text>
+            </Pressable>
+            <Pressable
+              disabled={busy}
+              onPress={onAccept}
+              style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}>
+              <Ionicons color={colors.white} name="checkmark" size={17} />
+              <Text style={styles.acceptText}>{busy ? 'Saving...' : 'Accept'}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {onView ? (
+          <Pressable
+            onPress={onView}
+            style={({ pressed }) => [styles.viewButton, pressed && styles.pressed]}>
+            <Text style={styles.viewText}>View Catch</Text>
+            <Ionicons color={colors.forest} name="arrow-forward" size={16} />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -261,6 +404,7 @@ const styles = StyleSheet.create({
   error: { marginTop: spacing.md, color: colors.error, fontSize: 13, textAlign: 'center' },
   section: { gap: 11, marginTop: spacing.xl },
   sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '900' },
+  sectionHelper: { color: colors.muted, fontSize: 11, lineHeight: 16 },
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',

@@ -57,7 +57,7 @@ export default function MessagesScreen() {
           <Text style={styles.title}>Messages</Text>
         </View>
         <Pressable
-          accessibilityLabel="View Catch proposals"
+          accessibilityLabel="View Catch invitations and proposals"
           onPress={() => router.push('/proposals')}
           style={styles.headerButton}>
           <Ionicons color={colors.forest} name="paper-plane-outline" size={20} />
@@ -82,7 +82,7 @@ export default function MessagesScreen() {
       <View style={styles.list}>
         {session && !isLoading && threads.length === 0 ? (
           <StatePanel
-            action="View Catch proposals"
+            action="View invitations & proposals"
             body="Message a Catch Mate, send a proposal, or join a Catch. The conversation will appear here."
             icon="chatbubble-ellipses-outline"
             onAction={() => router.push('/proposals')}

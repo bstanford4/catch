@@ -9,6 +9,10 @@ import { StatePanel } from '@/components/ui/state-panel';
 import { colors, radius, shadows, spacing } from '@/constants/theme';
 import { useAuth } from '@/providers/auth-provider';
 import {
+  type ReceivedCatchInvitation,
+  listReceivedCatchInvitations,
+} from '@/services/catch-invitation-service';
+import {
   type CatchMateInvite,
   type DirectCatchProposal,
   type SavedCatchMate,
@@ -40,18 +44,22 @@ export default function CatchMatesScreen() {
       return;
     }
     setIsLoading(true);
-    const [matesResult, proposalsResult] = await Promise.all([
+    const [matesResult, proposalsResult, invitationsResult] = await Promise.all([
       listCatchMates(),
       listDirectCatchProposals(),
+      listReceivedCatchInvitations(),
     ]);
     setMates(matesResult.data);
     setPendingCount(
       proposalsResult.data.filter(
         (proposal: DirectCatchProposal) =>
           proposal.direction === 'received' && proposal.status === 'pending',
-      ).length,
+      ).length +
+        invitationsResult.data.filter(
+          (invitation: ReceivedCatchInvitation) => invitation.status === 'pending',
+        ).length,
     );
-    setError(matesResult.error ?? proposalsResult.error ?? '');
+    setError(matesResult.error ?? proposalsResult.error ?? invitationsResult.error ?? '');
     setIsLoading(false);
   }, [session]);
 

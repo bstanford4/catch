@@ -127,7 +127,7 @@ export default function ProfileScreen() {
         {
           icon: 'people-outline',
           label: 'Catch Mates',
-          detail: 'Saved people and direct proposals',
+          detail: 'Saved people, invitations, and direct proposals',
           onPress: () => router.push('/catch-mates'),
         },
         {

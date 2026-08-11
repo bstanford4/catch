@@ -2,6 +2,10 @@
 
 ## Implemented in this iteration
 
+- Catch Mate invitations can be selected while creating or editing an upcoming
+  Catch. Invitees explicitly accept before becoming participants or seeing a
+  protected private location.
+
 ### Phase 0 — workspace and architecture
 
 - Expo/TypeScript foundation and conventions.

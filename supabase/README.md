@@ -88,15 +88,19 @@ The local Expo demo does not require Supabase. To enable the backend:
     Catches, opt-in approval-gated discovery for accepted direct proposals, and
     recipient-controlled shared feedback that is private by default and can be
     featured anonymously on a participant profile.
-28. Run `seed.sql` for catalog and public-venue demo records.
-29. Copy `.env.example` to `.env` and add the project URL and client-safe
+28. Run `migrations/202608100026_catch_mate_invitations.sql` once. It adds
+    host-managed invitations from new or edited Catches, explicit invitee
+    acceptance, capacity enforcement, private-location protection, and push
+    alerts using the existing proposal notification preference.
+29. Run `seed.sql` for catalog and public-venue demo records.
+30. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-30. Add `catch://**` to the project's Auth redirect URLs.
-31. Link the app to Expo EAS, put its project ID in
+31. Add `catch://**` to the project's Auth redirect URLs.
+32. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-32. Restart Expo so client environment variables are rebundled.
+33. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 
