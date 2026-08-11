@@ -86,7 +86,7 @@ declare
   normalized_ids uuid[];
   invalid_count integer;
   occupied_count integer;
-  invitee_id uuid;
+  notified_invitee_id uuid;
   host_name text;
 begin
   if caller_id is null then
@@ -170,7 +170,7 @@ begin
   from public.profiles profile
   where profile.user_id = caller_id;
 
-  for invitee_id in
+  for notified_invitee_id in
     insert into public.catch_invitations as current_invitation (
       catch_id, inviter_id, invitee_id, status, responded_at, created_at, updated_at
     )
@@ -193,7 +193,7 @@ begin
     returning current_invitation.invitee_id
   loop
     perform private.queue_push_notification(
-      invitee_id,
+      notified_invitee_id,
       'proposals',
       coalesce(host_name, 'A Catch Mate') || ' invited you to a Catch',
       target.title || ' starts ' || to_char(target.starts_at at time zone target.timezone, 'Dy, Mon FMDD at FMHH12:MI AM'),

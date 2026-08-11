@@ -92,15 +92,18 @@ The local Expo demo does not require Supabase. To enable the backend:
     host-managed invitations from new or edited Catches, explicit invitee
     acceptance, capacity enforcement, private-location protection, and push
     alerts using the existing proposal notification preference.
-29. Run `seed.sql` for catalog and public-venue demo records.
-30. Copy `.env.example` to `.env` and add the project URL and client-safe
+29. Run `migrations/202608100027_fix_invitation_invitee_ambiguity.sql` once. It
+    fixes the invitation notification loop variable without changing stored
+    Catch or invitation data.
+30. Run `seed.sql` for catalog and public-venue demo records.
+31. Copy `.env.example` to `.env` and add the project URL and client-safe
     publishable key.
-31. Add `catch://**` to the project's Auth redirect URLs.
-32. Link the app to Expo EAS, put its project ID in
+32. Add `catch://**` to the project's Auth redirect URLs.
+33. Link the app to Expo EAS, put its project ID in
     `EXPO_PUBLIC_EAS_PROJECT_ID`, configure iOS/Android push credentials, and
     install a development or production build. Expo Go and the web preview
     cannot validate production push delivery.
-33. Restart Expo so client environment variables are rebundled.
+34. Restart Expo so client environment variables are rebundled.
 
 When copying a UTF-8 SQL file from Windows PowerShell 5.1, specify its encoding:
 
